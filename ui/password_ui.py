@@ -18,7 +18,7 @@ class PasswordUI:
         title_frame = tk.Frame(main_container, bg="#2d2d2d", relief="flat", bd=0)
         title_frame.pack(fill="x", pady=(0, 20))
         
-        title = tk.Label(title_frame, text="🔐 PASSWORD ATTACK SIMULATION", 
+        title = tk.Label(title_frame, text="PASSWORD ATTACK SIMULATION", 
                         font=("Segoe UI", 18, "bold"), bg="#2d2d2d", fg="#00d9ff")
         title.pack(pady=15)
         
@@ -27,7 +27,7 @@ class PasswordUI:
         subtitle.pack(pady=(0, 10))
         
         # User Context Section
-        context_frame = self._create_section(main_container, "👤 User Context (Optional)")
+        context_frame = self._create_section(main_container, "User Context (Optional)")
         
         context_grid = tk.Frame(context_frame, bg="#2d2d2d")
         context_grid.pack(fill="x", padx=15, pady=10)
@@ -49,7 +49,7 @@ class PasswordUI:
         context_grid.columnconfigure(1, weight=1)
         
         # Input Mode Section
-        mode_frame = self._create_section(main_container, "⚙️ Input Mode")
+        mode_frame = self._create_section(main_container, "Input Mode")
         
         mode_radio_frame = tk.Frame(mode_frame, bg="#2d2d2d")
         mode_radio_frame.pack(fill="x", padx=15, pady=10)
@@ -69,7 +69,7 @@ class PasswordUI:
         rb2.pack(side="left", padx=20)
         
         # Credential Input Section
-        cred_frame = self._create_section(main_container, "🔑 Credential Input")
+        cred_frame = self._create_section(main_container, "Credential Input")
         
         cred_grid = tk.Frame(cred_frame, bg="#2d2d2d")
         cred_grid.pack(fill="x", padx=15, pady=10)
@@ -80,13 +80,13 @@ class PasswordUI:
         
         self.credential_entry = tk.Entry(cred_grid, width=50, font=("Segoe UI", 10), 
                                         bg="#3c3c3c", fg="#ffffff", insertbackground="#ffffff", 
-                                        relief="flat", bd=5, show="●")
+                                        relief="flat", bd=5, show="*")
         self.credential_entry.grid(row=0, column=1, pady=8, padx=15, sticky="ew")
         
         cred_grid.columnconfigure(1, weight=1)
         
         # Hash Algorithm Section
-        algo_frame = self._create_section(main_container, "🔐 Hash Algorithm")
+        algo_frame = self._create_section(main_container, "Hash Algorithm")
         
         algo_grid = tk.Frame(algo_frame, bg="#2d2d2d")
         algo_grid.pack(fill="x", padx=15, pady=10)
@@ -112,7 +112,7 @@ class PasswordUI:
         btn_frame = tk.Frame(main_container, bg="#1e1e1e")
         btn_frame.pack(pady=20)
         
-        simulate_btn = tk.Button(btn_frame, text="🚀 SIMULATE PASSWORD ATTACK", 
+        simulate_btn = tk.Button(btn_frame, text="SIMULATE PASSWORD ATTACK", 
                                 font=("Segoe UI", 12, "bold"), bg="#00d9ff", fg="#000000",
                                 activebackground="#00b8d4", activeforeground="#000000",
                                 command=self.run_simulation, width=35, height=2, 
@@ -120,7 +120,7 @@ class PasswordUI:
         simulate_btn.pack()
         
         # Results Section
-        results_frame = self._create_section(main_container, "📊 Simulation Results")
+        results_frame = self._create_section(main_container, "Simulation Results")
         
         self.result_text = tk.Text(results_frame, height=10, width=85, 
                                    font=("Consolas", 10), bg="#0d0d0d", fg="#00ff00", 
@@ -140,7 +140,7 @@ class PasswordUI:
         """Toggle between password and hash input modes"""
         if self.input_mode.get() == "password":
             self.input_label.config(text="Password:")
-            self.credential_entry.config(show="●")
+            self.credential_entry.config(show="*")
         else:
             self.input_label.config(text="Hash:")
             self.credential_entry.config(show="")
@@ -156,33 +156,36 @@ class PasswordUI:
             messagebox.showerror("Error", "Please enter a password or hash")
             return
         
-        # Run simulation
-        result = simulate_password_attack(
-            credential=credential,
-            algorithm=algorithm,
-            input_mode=input_mode,
-            username=username,
-            fullname=fullname
-        )
-        
-        # Display results
-        self.result_text.config(state="normal")
-        self.result_text.delete(1.0, tk.END)
-        
-        output = "═" * 80 + "\n"
-        output += "  SIMULATION RESULTS\n"
-        output += "═" * 80 + "\n\n"
-        output += f"  Status:            {'CRACKED ❌' if result['cracked'] else 'NOT CRACKED ✓'}\n"
-        output += f"  Attack Used:       {result['attack_used']}\n"
-        output += f"  Password Strength: {result['password_strength']}\n"
-        output += f"  AI Risk Level:     {result['ai_risk_level']}\n"
-        
-        if result['cracked']:
-            output += f"\n  Cracked Password:  {result['cracked_password']}\n"
-        
-        output += "\n" + "═" * 80 + "\n"
-        output += "  ⚠️  This is a simulation for educational purposes only\n"
-        output += "═" * 80
-        
-        self.result_text.insert(1.0, output)
-        self.result_text.config(state="disabled")
+        try:
+            # Run simulation
+            result = simulate_password_attack(
+                credential=credential,
+                algorithm=algorithm,
+                input_mode=input_mode,
+                username=username,
+                fullname=fullname
+            )
+            
+            # Display results
+            self.result_text.config(state="normal")
+            self.result_text.delete(1.0, tk.END)
+            
+            output = "=" * 80 + "\n"
+            output += "  SIMULATION RESULTS\n"
+            output += "=" * 80 + "\n\n"
+            output += f"  Status:            {'CRACKED [X]' if result['cracked'] else 'NOT CRACKED [OK]'}\n"
+            output += f"  Attack Used:       {result['attack_used']}\n"
+            output += f"  Password Strength: {result['password_strength']}\n"
+            output += f"  AI Risk Level:     {result['ai_risk_level']}\n"
+            
+            if result['cracked']:
+                output += f"\n  Cracked Password:  {result['cracked_password']}\n"
+            
+            output += "\n" + "=" * 80 + "\n"
+            output += "  WARNING: This is a simulation for educational purposes only\n"
+            output += "=" * 80
+            
+            self.result_text.insert(1.0, output)
+            self.result_text.config(state="disabled")
+        except Exception as e:
+            messagebox.showerror("Error", f"Simulation failed: {str(e)}")
