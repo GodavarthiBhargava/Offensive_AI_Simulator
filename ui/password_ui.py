@@ -122,11 +122,9 @@ class PasswordUI:
         # Results Section
         results_frame = self._create_section(main_container, "Simulation Results")
         
-        self.result_text = tk.Text(results_frame, height=10, width=85, 
-                                   font=("Consolas", 10), bg="#0d0d0d", fg="#00ff00", 
-                                   insertbackground="#00ff00", relief="flat", bd=0, 
-                                   state="disabled", padx=15, pady=15)
-        self.result_text.pack(fill="both", expand=True, padx=15, pady=10)
+        # Scrollable results container
+        self.results_container = tk.Frame(results_frame, bg="#2d2d2d")
+        self.results_container.pack(fill="both", expand=True, padx=10, pady=10)
     
     def _create_section(self, parent, title):
         """Create a styled section frame"""
@@ -146,23 +144,17 @@ class PasswordUI:
             self.credential_entry.config(show="")
     
     def run_simulation(self):
-        print("Button clicked!")  # Debug
         credential = self.credential_entry.get().strip()
         algorithm = self.algorithm_var.get()
         username = self.username_entry.get().strip()
         fullname = self.fullname_entry.get().strip()
         input_mode = self.input_mode.get()
         
-        print(f"Credential: {credential}")  # Debug
-        print(f"Algorithm: {algorithm}")  # Debug
-        print(f"Input mode: {input_mode}")  # Debug
-        
         if not credential:
             messagebox.showerror("Error", "Please enter a password or hash")
             return
         
         try:
-            print("Starting simulation...")  # Debug
             # Run simulation
             result = simulate_password_attack(
                 credential=credential,
@@ -172,33 +164,56 @@ class PasswordUI:
                 fullname=fullname
             )
             
-            print(f"Result: {result}")  # Debug
+            # Display results in card format with colors
+            self.display_results(result)
             
-            # Display results
-            self.result_text.config(state="normal")
-            self.result_text.delete(1.0, tk.END)
-            
-            output = "=" * 80 + "\n"
-            output += "  SIMULATION RESULTS\n"
-            output += "=" * 80 + "\n\n"
-            output += f"  Status:            {'CRACKED [X]' if result['cracked'] else 'NOT CRACKED [OK]'}\n"
-            output += f"  Attack Used:       {result['attack_used']}\n"
-            output += f"  Password Strength: {result['password_strength']}\n"
-            output += f"  AI Risk Level:     {result['ai_risk_level']}\n"
-            
-            if result['cracked']:
-                output += f"\n  Cracked Password:  {result['cracked_password']}\n"
-            
-            output += "\n" + "=" * 80 + "\n"
-            output += "  WARNING: This is a simulation for educational purposes only\n"
-            output += "=" * 80
-            
-            print("Inserting output...")  # Debug
-            self.result_text.insert(1.0, output)
-            self.result_text.config(state="disabled")
-            print("Done!")  # Debug
         except Exception as e:
-            print(f"ERROR: {e}")  # Debug
-            import traceback
-            traceback.print_exc()
             messagebox.showerror("Error", f"Simulation failed: {str(e)}")
+    
+    def display_results(self, result):
+        """Display results in a colored card format"""
+        # Clear previous results
+        for widget in self.results_container.winfo_children():
+            widget.destroy()
+        
+        # Status card
+        status_color = "#ff4444" if result['cracked'] else "#00ff00"
+        status_text = "CRACKED" if result['cracked'] else "NOT CRACKED"
+        self._create_result_card("Status", status_text, status_color)
+        
+        # Attack Used card
+        attack_color = "#ff9800" if result['attack_used'] != "None" else "#888888"
+        self._create_result_card("Attack Used", result['attack_used'], attack_color)
+        
+        # Password Strength card
+        strength_colors = {"Weak": "#ff4444", "Medium": "#ff9800", "Strong": "#00ff00", "Unknown": "#888888"}
+        strength_color = strength_colors.get(result['password_strength'], "#888888")
+        self._create_result_card("Password Strength", result['password_strength'], strength_color)
+        
+        # AI Risk Level card
+        risk_colors = {"High": "#ff4444", "Medium": "#ff9800", "Low": "#00ff00", "Unknown": "#888888"}
+        risk_color = risk_colors.get(result['ai_risk_level'], "#888888")
+        self._create_result_card("AI Risk Level", result['ai_risk_level'], risk_color)
+        
+        # Cracked Password card (if applicable)
+        if result['cracked']:
+            self._create_result_card("Cracked Password", result['cracked_password'], "#00d9ff")
+        
+        # Warning footer
+        warning_frame = tk.Frame(self.results_container, bg="#2d2d2d", relief="flat")
+        warning_frame.pack(fill="x", pady=(10, 0))
+        tk.Label(warning_frame, text="WARNING: Educational Simulation Only", 
+                font=("Segoe UI", 9, "bold"), bg="#2d2d2d", fg="#ff9800").pack(pady=8)
+    
+    def _create_result_card(self, label, value, color):
+        """Create a colored result card"""
+        card = tk.Frame(self.results_container, bg="#3c3c3c", relief="flat", bd=1)
+        card.pack(fill="x", pady=5, padx=10)
+        
+        # Label
+        tk.Label(card, text=label + ":", font=("Segoe UI", 10, "bold"), 
+                bg="#3c3c3c", fg="#cccccc", anchor="w").pack(side="left", padx=15, pady=10)
+        
+        # Value with color
+        tk.Label(card, text=value, font=("Segoe UI", 11, "bold"), 
+                bg="#3c3c3c", fg=color, anchor="e").pack(side="right", padx=15, pady=10)
