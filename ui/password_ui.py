@@ -146,17 +146,23 @@ class PasswordUI:
             self.credential_entry.config(show="")
     
     def run_simulation(self):
+        print("Button clicked!")  # Debug
         credential = self.credential_entry.get().strip()
         algorithm = self.algorithm_var.get()
         username = self.username_entry.get().strip()
         fullname = self.fullname_entry.get().strip()
         input_mode = self.input_mode.get()
         
+        print(f"Credential: {credential}")  # Debug
+        print(f"Algorithm: {algorithm}")  # Debug
+        print(f"Input mode: {input_mode}")  # Debug
+        
         if not credential:
             messagebox.showerror("Error", "Please enter a password or hash")
             return
         
         try:
+            print("Starting simulation...")  # Debug
             # Run simulation
             result = simulate_password_attack(
                 credential=credential,
@@ -165,6 +171,8 @@ class PasswordUI:
                 username=username,
                 fullname=fullname
             )
+            
+            print(f"Result: {result}")  # Debug
             
             # Display results
             self.result_text.config(state="normal")
@@ -185,7 +193,12 @@ class PasswordUI:
             output += "  WARNING: This is a simulation for educational purposes only\n"
             output += "=" * 80
             
+            print("Inserting output...")  # Debug
             self.result_text.insert(1.0, output)
             self.result_text.config(state="disabled")
+            print("Done!")  # Debug
         except Exception as e:
+            print(f"ERROR: {e}")  # Debug
+            import traceback
+            traceback.print_exc()
             messagebox.showerror("Error", f"Simulation failed: {str(e)}")
