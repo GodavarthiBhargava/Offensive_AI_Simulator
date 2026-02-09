@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import messagebox
 from ui.password_ui import PasswordUI
+import os
+from PIL import Image, ImageTk
 
 class MainWindow:
     def __init__(self, root):
@@ -10,8 +12,26 @@ class MainWindow:
         self.root.resizable(False, False)
         self.root.configure(bg="#1e1e1e")
         
-        # Main container
-        main_container = tk.Frame(root, bg="#1e1e1e")
+        # Try to load background image
+        self.bg_image = None
+        bg_path = "assets/bg.png"
+        if os.path.exists(bg_path):
+            try:
+                img = Image.open(bg_path)
+                img = img.resize((700, 550), Image.Resampling.LANCZOS)
+                self.bg_image = ImageTk.PhotoImage(img)
+            except:
+                pass
+        
+        # Main container with background
+        if self.bg_image:
+            bg_label = tk.Label(root, image=self.bg_image)
+            bg_label.place(x=0, y=0, relwidth=1, relheight=1)
+            main_container = tk.Frame(root, bg="#1e1e1e")
+            main_container.configure(bg="")
+        else:
+            main_container = tk.Frame(root, bg="#1e1e1e")
+        
         main_container.pack(fill="both", expand=True, padx=30, pady=30)
         
         # Title section

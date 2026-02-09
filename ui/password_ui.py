@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from backend.password_engine import simulate_password_attack
+import os
+from PIL import Image, ImageTk
 
 class PasswordUI:
     def __init__(self, window):
@@ -10,8 +12,26 @@ class PasswordUI:
         self.window.resizable(False, False)
         self.window.configure(bg="#1e1e1e")
         
+        # Try to load background image
+        self.bg_image = None
+        bg_path = "assets/bg.png"
+        if os.path.exists(bg_path):
+            try:
+                img = Image.open(bg_path)
+                img = img.resize((850, 750), Image.Resampling.LANCZOS)
+                self.bg_image = ImageTk.PhotoImage(img)
+            except:
+                pass
+        
+        # Background
+        if self.bg_image:
+            bg_label = tk.Label(window, image=self.bg_image)
+            bg_label.place(x=0, y=0, relwidth=1, relheight=1)
+        
         # Main container
         main_container = tk.Frame(window, bg="#1e1e1e")
+        if self.bg_image:
+            main_container.configure(bg="")
         main_container.pack(fill="both", expand=True, padx=20, pady=20)
         
         # Title
@@ -51,22 +71,9 @@ class PasswordUI:
         # Input Mode Section
         mode_frame = self._create_section(main_container, "Input Mode")
         
-        mode_radio_frame = tk.Frame(mode_frame, bg="#2d2d2d")
-        mode_radio_frame.pack(fill="x", padx=15, pady=10)
-        
-        self.input_mode = tk.StringVar(value="password")
-        
-        rb1 = tk.Radiobutton(mode_radio_frame, text="Enter Password", variable=self.input_mode, 
-                            value="password", font=("Segoe UI", 10), bg="#2d2d2d", fg="#cccccc", 
-                            selectcolor="#3c3c3c", activebackground="#2d2d2d", 
-                            activeforeground="#00d9ff", command=self._toggle_input_mode)
-        rb1.pack(side="left", padx=20)
-        
-        rb2 = tk.Radiobutton(mode_radio_frame, text="Enter Hash", variable=self.input_mode, 
-                            value="hash", font=("Segoe UI", 10), bg="#2d2d2d", fg="#cccccc", 
-                            selectcolor="#3c3c3c", activebackground="#2d2d2d", 
-                            activeforeground="#00d9ff", command=self._toggle_input_mode)
-        rb2.pack(side="left", padx=20)
+        mode_label = tk.Label(mode_frame, text="Enter Password to Test:", 
+                             font=("Segoe UI", 10), bg="#2d2d2d", fg="#cccccc")
+        mode_label.pack(padx=15, pady=10, anchor="w")
         
         # Credential Input Section
         cred_frame = self._create_section(main_container, "Credential Input")
@@ -118,13 +125,6 @@ class PasswordUI:
                                 command=self.run_simulation, width=35, height=2, 
                                 relief="flat", bd=0, cursor="hand2")
         simulate_btn.pack()
-        
-        # Results Section
-        results_frame = self._create_section(main_container, "Simulation Results")
-        
-        # Scrollable results container
-        self.results_container = tk.Frame(results_frame, bg="#2d2d2d")
-        self.results_container.pack(fill="both", expand=True, padx=10, pady=10)
     
     def _create_section(self, parent, title):
         """Create a styled section frame"""
@@ -134,80 +134,87 @@ class PasswordUI:
         frame.pack(fill="x", pady=10)
         return frame
     
-    def _toggle_input_mode(self):
-        """Toggle between password and hash input modes"""
-        if self.input_mode.get() == "password":
-            self.input_label.config(text="Password:")
-            self.credential_entry.config(show="*")
-        else:
-            self.input_label.config(text="Hash:")
-            self.credential_entry.config(show="")
-    
     def run_simulation(self):
-        credential = self.credential_entry.get().strip()
+        password = self.credential_entry.get().strip()
         algorithm = self.algorithm_var.get()
         username = self.username_entry.get().strip()
         fullname = self.fullname_entry.get().strip()
-        input_mode = self.input_mode.get()
         
-        if not credential:
-            messagebox.showerror("Error", "Please enter a password or hash")
+        if not password:
+            messagebox.showerror("Error", "Please enter a password")
             return
         
         try:
             # Run simulation
-            result = simulate_password_attack(
-                credential=credential,
-                algorithm=algorithm,
-                input_mode=input_mode,
-                username=username,
-                fullname=fullname
-            )
+            result = simulate_password_attack(password, algorithm, username, fullname)
             
-            # Display results in card format with colors
+            # Display results
             self.display_results(result)
             
         except Exception as e:
             messagebox.showerror("Error", f"Simulation failed: {str(e)}")
     
     def display_results(self, result):
-        """Display results in a colored card format"""
-        # Clear previous results
-        for widget in self.results_container.winfo_children():
-            widget.destroy()
+        """Display results in a separate popup window"""
+        # Create popup window
+        result_window = tk.Toplevel(self.window)
+        result_window.title("Simulation Results")
+        result_window.geometry("500x400")
+        result_window.resizable(False, False)
+        result_window.configure(bg="#1e1e1e")
+        
+        # Title
+        title_frame = tk.Frame(result_window, bg="#2d2d2d", relief="flat")
+        title_frame.pack(fill="x", pady=(0, 20))
+        
+        title = tk.Label(title_frame, text="SIMULATION RESULTS", 
+                        font=("Segoe UI", 16, "bold"), bg="#2d2d2d", fg="#00d9ff")
+        title.pack(pady=15)
+        
+        # Results container
+        results_container = tk.Frame(result_window, bg="#1e1e1e")
+        results_container.pack(fill="both", expand=True, padx=20, pady=10)
         
         # Status card
         status_color = "#ff4444" if result['cracked'] else "#00ff00"
         status_text = "CRACKED" if result['cracked'] else "NOT CRACKED"
-        self._create_result_card("Status", status_text, status_color)
+        self._create_result_card(results_container, "Status", status_text, status_color)
         
         # Attack Used card
         attack_color = "#ff9800" if result['attack_used'] != "None" else "#888888"
-        self._create_result_card("Attack Used", result['attack_used'], attack_color)
+        self._create_result_card(results_container, "Attack Used", result['attack_used'], attack_color)
         
         # Password Strength card
         strength_colors = {"Weak": "#ff4444", "Medium": "#ff9800", "Strong": "#00ff00", "Unknown": "#888888"}
         strength_color = strength_colors.get(result['password_strength'], "#888888")
-        self._create_result_card("Password Strength", result['password_strength'], strength_color)
+        self._create_result_card(results_container, "Password Strength", result['password_strength'], strength_color)
         
         # AI Risk Level card
         risk_colors = {"High": "#ff4444", "Medium": "#ff9800", "Low": "#00ff00", "Unknown": "#888888"}
         risk_color = risk_colors.get(result['ai_risk_level'], "#888888")
-        self._create_result_card("AI Risk Level", result['ai_risk_level'], risk_color)
+        self._create_result_card(results_container, "AI Risk Level", result['ai_risk_level'], risk_color)
         
         # Cracked Password card (if applicable)
         if result['cracked']:
-            self._create_result_card("Cracked Password", result['cracked_password'], "#00d9ff")
+            self._create_result_card(results_container, "Cracked Password", result['cracked_password'], "#00d9ff")
         
         # Warning footer
-        warning_frame = tk.Frame(self.results_container, bg="#2d2d2d", relief="flat")
-        warning_frame.pack(fill="x", pady=(10, 0))
+        warning_frame = tk.Frame(result_window, bg="#2d2d2d", relief="flat")
+        warning_frame.pack(side="bottom", fill="x", pady=(10, 0))
         tk.Label(warning_frame, text="WARNING: Educational Simulation Only", 
-                font=("Segoe UI", 9, "bold"), bg="#2d2d2d", fg="#ff9800").pack(pady=8)
+                font=("Segoe UI", 9, "bold"), bg="#2d2d2d", fg="#ff9800").pack(pady=10)
+        
+        # Close button
+        close_btn = tk.Button(result_window, text="CLOSE", 
+                             font=("Segoe UI", 10, "bold"), bg="#00d9ff", fg="#000000",
+                             activebackground="#00b8d4", activeforeground="#000000",
+                             command=result_window.destroy, width=20, height=1, 
+                             relief="flat", bd=0, cursor="hand2")
+        close_btn.pack(pady=10)
     
-    def _create_result_card(self, label, value, color):
+    def _create_result_card(self, parent, label, value, color):
         """Create a colored result card"""
-        card = tk.Frame(self.results_container, bg="#3c3c3c", relief="flat", bd=1)
+        card = tk.Frame(parent, bg="#3c3c3c", relief="flat", bd=1)
         card.pack(fill="x", pady=5, padx=10)
         
         # Label

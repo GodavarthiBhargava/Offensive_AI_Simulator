@@ -1,0 +1,20 @@
+# Icon Setup Instructions
+
+Your icon.jpg needs to be converted to icon.ico format for Windows taskbar.
+
+## Quick Conversion:
+
+1. Go to: https://convertio.co/jpg-ico/
+2. Upload your icon.jpg
+3. Download as icon.ico
+4. Place icon.ico in this assets/ folder
+
+OR use Python to convert:
+
+```python
+from PIL import Image
+img = Image.open('assets/icon.jpg')
+img.save('assets/icon.ico', format='ICO')
+```
+
+The application is already configured to use assets/icon.ico
