@@ -46,10 +46,9 @@ class WelcomeScreen:
         
         try:
             from PIL import Image, ImageTk
-            if os.path.exists("ui/assessts/bg.jpg") or os.path.exists("ui/assessts/bg.png"):
-                bg_path = "ui/assessts/bg.jpg" if os.path.exists("ui/assessts/bg.jpg") else "ui/assessts/bg.png"
+            if os.path.exists("ui/assessts/welcome.jpg") or os.path.exists("ui/assessts/welcome.png"):
+                bg_path = "ui/assessts/welcome.jpg" if os.path.exists("ui/assessts/welcome.jpg") else "ui/assessts/welcome.png"
                 img = Image.open(bg_path)
-                # Get frame size for proper scaling
                 img = img.resize((500, 600), Image.Resampling.LANCZOS)
                 photo = ImageTk.PhotoImage(img)
                 bg_label = tk.Label(left_frame, image=photo, bg="#1F1F1F")
