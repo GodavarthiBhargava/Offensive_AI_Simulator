@@ -196,14 +196,14 @@ class Dashboard:
         
         modules = [
             ("Password Attack Simulation", self.open_password_module),
-            ("Social Engineering & Phishing", None),
+            ("Case Files", self.open_case_history),
             ("AI Learning & Behaviour Analysis", None),
             ("Awareness Training & Feedback", None)
         ]
         
         for i, (name, cmd) in enumerate(modules):
             row, col = i // 2, i % 2
-            self._create_module_card(grid, name, cmd, row, col, i == 0)
+            self._create_module_card(grid, name, cmd, row, col, i in [0, 1])
     
     def _create_module_card(self, parent, title, command, row, col, enabled):
         card = tk.Frame(parent, bg="#1F1F1F" if enabled else "#3E3E3E",
@@ -234,6 +234,12 @@ class Dashboard:
         module_window = tk.Toplevel(self.root)
         module_window.configure(bg="#2E2E2E")
         PasswordAttackModule(module_window)
+    
+    def open_case_history(self):
+        from ui.case_history_ui import CaseHistoryUI
+        history_window = tk.Toplevel(self.root)
+        history_window.configure(bg="#2E2E2E")
+        CaseHistoryUI(history_window)
 
 
 def main():

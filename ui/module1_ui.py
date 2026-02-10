@@ -4,7 +4,7 @@ from backend.dictionary_attack import dictionary_attack_plain, dictionary_attack
 from backend.brute_force import brute_force_plain, brute_force_hash
 from backend.ai_attack import ai_attack_plain, ai_attack_hash
 from backend.hashing_utils import hash_password
-from backend.database import init_database, save_case_record
+from backend.database import init_database, save_case_record, generate_case_id
 import time
 import threading
 import os
@@ -311,19 +311,22 @@ class PasswordAttackModule:
             self.print_console("", 0.05)
             self.print_console("="*60, 0.05)
             if cracked:
-                result = f"SUCCESS: Password cracked using {method}. Found: {found_password}"
-                self.print_console(f"[SUCCESS] {result}", 0.1)
+                result_text = f"SUCCESS: Password cracked using {method}. Found: {found_password}"
+                self.print_console(f"[SUCCESS] {result_text}", 0.1)
             else:
-                result = f"FAILED: Password not cracked. {method}"
-                self.print_console(f"[FAILED] {result}", 0.1)
+                result_text = f"FAILED: Password not cracked. {method}"
+                self.print_console(f"[FAILED] {result_text}", 0.1)
             self.print_console("="*60, 0.05)
             
-            # Save to database
+            # Generate case ID and save to database
+            case_id = generate_case_id()
+            result_status = "Cracked" if cracked else "Not Cracked"
+            
             save_case_record(
-                first_name, last_name, password_type, attack_type,
-                algorithm if algorithm else "N/A", result
+                case_id, first_name, last_name, credential, password_type, attack_type,
+                algorithm if algorithm else "N/A", result_status, found_password if found_password else "N/A"
             )
-            self.print_console("[INFO] Case saved to database.", 0.1)
+            self.print_console(f"[INFO] Case saved to database: {case_id}", 0.1)
             
         except Exception as e:
             self.print_console(f"[ERROR] {str(e)}", 0.1)
