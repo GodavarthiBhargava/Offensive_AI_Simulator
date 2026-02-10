@@ -194,7 +194,8 @@ class PasswordAttackModule:
             self.hash_algo_frame.pack_forget()
         else:
             self.password_frame.entry.config(show="")
-            self.hash_algo_frame.pack(fill="x", pady=(0, 15), before=self.attack_type_var.master)
+            # Pack hash algo frame right after password frame
+            self.hash_algo_frame.pack(fill="x", pady=(0, 15), after=self.password_frame)
     
     def toggle_attack_type(self):
         if self.attack_type_var.get() == "Dictionary Attack":
@@ -321,10 +322,17 @@ class PasswordAttackModule:
             # Generate case ID and save to database
             case_id = generate_case_id()
             result_status = "Cracked" if cracked else "Not Cracked"
+            cracked_pwd_to_save = found_password if (cracked and found_password) else "N/A"
+            
+            self.print_console("", 0.05)
+            self.print_console(f"[DEBUG] Cracked status: {cracked}", 0.05)
+            self.print_console(f"[DEBUG] Result status: {result_status}", 0.05)
+            self.print_console(f"[DEBUG] Found password: {cracked_pwd_to_save}", 0.05)
+            self.print_console("", 0.05)
             
             save_case_record(
                 case_id, first_name, last_name, credential, password_type, attack_type,
-                algorithm if algorithm else "N/A", result_status, found_password if found_password else "N/A"
+                algorithm if algorithm else "N/A", result_status, cracked_pwd_to_save
             )
             self.print_console(f"[INFO] Case saved to database: {case_id}", 0.1)
             
@@ -380,20 +388,38 @@ class PasswordAttackModule:
     
     def _dict_attack_hash_log(self, target_hash, algorithm, first_name, last_name):
         """Dictionary attack for hash with logging"""
-        self.print_console("[INFO] Checking personal information...", 0.1)
+        self.print_console(f"[INFO] Target hash: {target_hash}", 0.05)
+        self.print_console(f"[INFO] Using algorithm: {algorithm}", 0.05)
+        self.print_console("="*60, 0.05)
+        self.print_console("", 0.05)
+        
+        # STEP 1: Check personal information FIRST
+        self.print_console("[STEP 1] Checking personal information...", 0.1)
+        self.print_console("", 0.05)
         
         for name in [first_name, last_name]:
             if name:
+                self.print_console(f"[INFO] Testing name: '{name}'", 0.05)
                 name_hash = hash_password(name, algorithm)
-                self.print_console(f"[INFO] Hashing '{name}': {name_hash[:16]}...", 0.05)
+                self.print_console(f"[INFO] Generated hash: {name_hash}", 0.05)
+                
                 if name_hash.lower() == target_hash.lower():
-                    self.print_console(f"[SUCCESS] Match found: '{name}'", 0.1)
+                    self.print_console("", 0.05)
+                    self.print_console(f"[SUCCESS] ✓ MATCH FOUND: '{name}'", 0.1)
+                    self.print_console(f"[SUCCESS] Hash matches target hash!", 0.1)
                     return True, name, f"Personal Information Match with {algorithm}"
+                else:
+                    self.print_console(f"[INFO] ✗ No match", 0.05)
+                self.print_console("", 0.05)
         
-        self.print_console("[INFO] No personal information match", 0.05)
+        self.print_console("[INFO] No personal information match found", 0.05)
+        self.print_console("="*60, 0.05)
         self.print_console("", 0.05)
         
-        self.print_console("[INFO] Scanning wordlist files...", 0.1)
+        # STEP 2: Check wordlist files
+        self.print_console("[STEP 2] Scanning wordlist files...", 0.1)
+        self.print_console(f"[INFO] Will hash each word with {algorithm} and compare", 0.05)
+        self.print_console("", 0.05)
         total_checked = 0
         
         for idx, wordlist_path in enumerate(self.wordlist_files, 1):
@@ -409,20 +435,37 @@ class PasswordAttackModule:
                         
                         total_checked += 1
                         
-                        if total_checked % 100 == 0:
-                            self.print_console(f"[INFO] Checked {total_checked} passwords...", 0.01)
-                        
-                        word_hash = hash_password(word, algorithm)
-                        if word_hash.lower() == target_hash.lower():
-                            self.print_console(f"[SUCCESS] MATCH FOUND at line {line_num}: '{word}'", 0.1)
-                            return True, word, f"Dictionary Attack with {algorithm}"
+                        # Show first 5 comparisons for debugging
+                        if total_checked <= 5:
+                            word_hash = hash_password(word, algorithm)
+                            self.print_console(f"[DEBUG] Word: '{word}' -> Hash: {word_hash}", 0.05)
+                            if word_hash.lower() == target_hash.lower():
+                                self.print_console("", 0.05)
+                                self.print_console(f"[SUCCESS] ✓ MATCH FOUND at line {line_num}: '{word}'", 0.1)
+                                self.print_console(f"[SUCCESS] Hash matches target hash!", 0.1)
+                                return True, word, f"Dictionary Attack with {algorithm}"
+                            else:
+                                self.print_console(f"[DEBUG] ✗ No match", 0.02)
+                            self.print_console("", 0.02)
+                        else:
+                            if total_checked % 100 == 0:
+                                self.print_console(f"[INFO] Checked {total_checked} passwords...", 0.01)
+                            
+                            word_hash = hash_password(word, algorithm)
+                            if word_hash.lower() == target_hash.lower():
+                                self.print_console("", 0.05)
+                                self.print_console(f"[SUCCESS] ✓ MATCH FOUND at line {line_num}: '{word}'", 0.1)
+                                self.print_console(f"[SUCCESS] Hash matches target hash!", 0.1)
+                                return True, word, f"Dictionary Attack with {algorithm}"
                 
-                self.print_console(f"[INFO] Completed: {line_num} passwords checked", 0.05)
+                self.print_console(f"[INFO] Completed: {line_num} passwords checked in this file", 0.05)
+                self.print_console("", 0.05)
             except Exception as e:
                 self.print_console(f"[ERROR] Error reading file: {str(e)}", 0.05)
         
+        self.print_console("="*60, 0.05)
         self.print_console(f"[INFO] Total passwords checked: {total_checked}", 0.05)
-        self.print_console(f"[FAILED] No match found with {algorithm}", 0.1)
+        self.print_console(f"[FAILED] ✗ No match found with {algorithm}", 0.1)
         return False, None, f"Not Cracked with {algorithm}"
 
 

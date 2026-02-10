@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import Canvas, Scrollbar
-from backend.database import get_all_cases, init_database
+from backend.database import get_all_cases, init_database, delete_case
 import os
 
 class CaseHistoryUI:
@@ -131,28 +131,9 @@ class CaseHistoryUI:
         # Separator line
         tk.Frame(card, bg="#00FF66", height=1).pack(fill="x", pady=10)
         
-        # BOTTOM SECTION - Result
+        # BOTTOM SECTION - Action Buttons Only
         bottom_frame = tk.Frame(card, bg="#141414")
         bottom_frame.pack(fill="x")
-        
-        # Result status
-        is_cracked = "Cracked" in result or "SUCCESS" in result
-        result_color = "#00FF00" if is_cracked else "#FF4444"
-        result_text = "✓ CRACKED" if is_cracked else "✗ NOT CRACKED"
-        
-        result_label = tk.Label(bottom_frame, text=result_text, 
-                               font=("Consolas", 12, "bold"), bg="#141414", fg=result_color)
-        result_label.pack(pady=5)
-        
-        # Cracked password (if available)
-        if is_cracked and cracked_pwd and cracked_pwd != "N/A":
-            pwd_frame = tk.Frame(bottom_frame, bg="#1a1a1a", relief="solid", bd=1)
-            pwd_frame.pack(fill="x", pady=5)
-            
-            tk.Label(pwd_frame, text="PASSWORD:", 
-                    font=("Consolas", 8, "bold"), bg="#1a1a1a", fg="#00FF66").pack(side="left", padx=5)
-            tk.Label(pwd_frame, text=cracked_pwd, 
-                    font=("Consolas", 10, "bold"), bg="#1a1a1a", fg="#FFFFFF").pack(side="left", padx=5)
         
         # Open Case button
         open_btn = tk.Button(bottom_frame, text="OPEN FULL CASE", 
@@ -160,10 +141,21 @@ class CaseHistoryUI:
                             activebackground="#003300", activeforeground="#00FF66",
                             relief="solid", bd=1, cursor="hand2",
                             command=lambda: self.open_case_details(case_id))
-        open_btn.pack(fill="x", pady=(10, 0))
+        open_btn.pack(fill="x", pady=(0, 5))
         
         open_btn.bind("<Enter>", lambda e: open_btn.config(bg="#003300"))
         open_btn.bind("<Leave>", lambda e: open_btn.config(bg="#000000"))
+        
+        # Delete button
+        delete_btn = tk.Button(bottom_frame, text="DELETE CASE", 
+                              font=("Consolas", 9, "bold"), bg="#000000", fg="#FF4444",
+                              activebackground="#330000", activeforeground="#FF4444",
+                              relief="solid", bd=1, cursor="hand2",
+                              command=lambda: self.delete_case(case_id))
+        delete_btn.pack(fill="x")
+        
+        delete_btn.bind("<Enter>", lambda e: delete_btn.config(bg="#330000"))
+        delete_btn.bind("<Leave>", lambda e: delete_btn.config(bg="#000000"))
     
     def _add_detail(self, parent, label, value):
         """Add a detail row to card"""
@@ -180,6 +172,27 @@ class CaseHistoryUI:
         from ui.case_detail_ui import CaseDetailUI
         detail_window = tk.Toplevel(self.window)
         CaseDetailUI(detail_window, case_id)
+    
+    def delete_case(self, case_id):
+        """Delete a case after confirmation"""
+        from tkinter import messagebox
+        
+        result = messagebox.askyesno(
+            "Confirm Delete",
+            f"Are you sure you want to delete case {case_id}?\n\nThis action cannot be undone."
+        )
+        
+        if result:
+            try:
+                delete_case(case_id)
+                messagebox.showinfo("Success", f"Case {case_id} deleted successfully")
+                # Refresh the display
+                for widget in self.window.winfo_children():
+                    if isinstance(widget, tk.Frame):
+                        widget.destroy()
+                self.__init__(self.window)
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to delete case: {str(e)}")
 
 
 if __name__ == "__main__":

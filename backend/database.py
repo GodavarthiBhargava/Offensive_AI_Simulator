@@ -129,3 +129,13 @@ def get_case_history(first_name, last_name):
     records = cursor.fetchall()
     conn.close()
     return records
+
+def delete_case(case_id):
+    """Delete a case by case_id"""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    
+    cursor.execute('DELETE FROM case_records WHERE case_id = ?', (case_id,))
+    
+    conn.commit()
+    conn.close()
