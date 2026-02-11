@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 from backend.dictionary_attack import dictionary_attack_plain, dictionary_attack_hash
-from backend.brute_force import brute_force_plain, brute_force_hash
+from backend.brute_force import brute_force_attack
 from backend.ai_attack import ai_attack_plain, ai_attack_hash
 from backend.hashing_utils import hash_password
 from backend.database import init_database, save_case_record, generate_case_id
@@ -285,11 +285,31 @@ class PasswordAttackModule:
                     )
             
             elif attack_type == "Brute Force":
-                self.print_console("[INFO] Starting brute force attack...", 0.1)
                 if password_type == "Plain Password":
-                    cracked, found_password, method = brute_force_plain(credential)
+                    result = brute_force_attack(
+                        target_value=credential,
+                        password_type="Plain",
+                        first_name=first_name,
+                        last_name=last_name,
+                        max_length=6,
+                        charset_type="lowercase_numbers",
+                        log_callback=lambda msg: self.print_console(msg, 0.01)
+                    )
                 else:
-                    cracked, found_password, method = brute_force_hash(credential, algorithm)
+                    result = brute_force_attack(
+                        target_value=credential,
+                        password_type="Hash",
+                        algorithm=algorithm,
+                        first_name=first_name,
+                        last_name=last_name,
+                        max_length=6,
+                        charset_type="lowercase_numbers",
+                        log_callback=lambda msg: self.print_console(msg, 0.01)
+                    )
+                
+                cracked = result["status"] == "CRACKED"
+                found_password = result.get("password")
+                method = result.get("method", "Brute Force")
                 
                 if cracked:
                     self.print_console(f"[SUCCESS] Password cracked: {found_password}", 0.1)
