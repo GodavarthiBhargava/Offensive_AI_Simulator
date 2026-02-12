@@ -29,7 +29,7 @@ class CaseHistoryUI:
         navbar.pack_propagate(False)
         
         tk.Label(navbar, text="◈ CASE FILES - FORENSIC DATABASE ◈",
-                font=("Consolas", 14, "bold"), bg="#000000", fg="#00FF66").pack(pady=15)
+                font=("Consolas", 16, "bold"), bg="#000000", fg="#00FF66").pack(pady=15)
         
         # Bottom border with glow effect
         tk.Frame(window, bg="#00FF66", height=2).pack(fill="x")
@@ -70,9 +70,9 @@ class CaseHistoryUI:
             empty_frame.pack(expand=True, fill="both", pady=150)
             
             tk.Label(empty_frame, text="⚠ NO CASES FOUND", 
-                    font=("Consolas", 20, "bold"), bg="#0d0d0d", fg="#FF4444").pack(pady=10)
+                    font=("Consolas", 22, "bold"), bg="#0d0d0d", fg="#FF4444").pack(pady=10)
             tk.Label(empty_frame, text="Investigation Not Started", 
-                    font=("Consolas", 12), bg="#0d0d0d", fg="#666666").pack()
+                    font=("Consolas", 14, "bold"), bg="#0d0d0d", fg="#666666").pack()
             return
         
         # Create grid of cards (3 per row)
@@ -86,7 +86,17 @@ class CaseHistoryUI:
     
     def create_case_card(self, parent, case):
         """Create a single case card"""
-        _, case_id, first_name, last_name, password_input, password_type, attack_type, algorithm, result, cracked_pwd, timestamp = case
+        case_data = case
+        case_id = case_data[1]
+        first_name = case_data[2]
+        last_name = case_data[3]
+        password_input = case_data[4]
+        password_type = case_data[5]
+        attack_type = case_data[6]
+        algorithm = case_data[7]
+        result = case_data[11]
+        cracked_pwd = case_data[12]
+        timestamp = case_data[13]
         
         # Card container
         card = tk.Frame(parent, bg="#141414", relief="solid", bd=0, 
@@ -112,12 +122,12 @@ class CaseHistoryUI:
         case_id_frame.pack(anchor="w")
         
         tk.Label(case_id_frame, text=f"◈ {case_id} ◈", 
-                font=("Consolas", 11, "bold"), bg="#003300", fg="#00FF66",
+                font=("Consolas", 13, "bold"), bg="#003300", fg="#00FF66",
                 padx=10, pady=3).pack()
         
         # Timestamp
         tk.Label(top_frame, text=timestamp, 
-                font=("Consolas", 8), bg="#141414", fg="#666666").pack(anchor="w", pady=(5, 0))
+                font=("Consolas", 10, "bold"), bg="#141414", fg="#666666").pack(anchor="w", pady=(5, 0))
         
         # MIDDLE SECTION - Case Details
         middle_frame = tk.Frame(card, bg="#141414")
@@ -137,7 +147,7 @@ class CaseHistoryUI:
         
         # Open Case button
         open_btn = tk.Button(bottom_frame, text="OPEN FULL CASE", 
-                            font=("Consolas", 9, "bold"), bg="#000000", fg="#00FF66",
+                            font=("Consolas", 11, "bold"), bg="#000000", fg="#00FF66",
                             activebackground="#003300", activeforeground="#00FF66",
                             relief="solid", bd=1, cursor="hand2",
                             command=lambda: self.open_case_details(case_id))
@@ -148,7 +158,7 @@ class CaseHistoryUI:
         
         # Delete button
         delete_btn = tk.Button(bottom_frame, text="DELETE CASE", 
-                              font=("Consolas", 9, "bold"), bg="#000000", fg="#FF4444",
+                              font=("Consolas", 11, "bold"), bg="#000000", fg="#FF4444",
                               activebackground="#330000", activeforeground="#FF4444",
                               relief="solid", bd=1, cursor="hand2",
                               command=lambda: self.delete_case(case_id))
@@ -162,9 +172,9 @@ class CaseHistoryUI:
         row = tk.Frame(parent, bg="#141414")
         row.pack(fill="x", pady=2)
         
-        tk.Label(row, text=label, font=("Consolas", 9, "bold"), 
+        tk.Label(row, text=label, font=("Consolas", 11, "bold"), 
                 bg="#141414", fg="#00FF66", width=8, anchor="w").pack(side="left")
-        tk.Label(row, text=value, font=("Consolas", 9), 
+        tk.Label(row, text=value, font=("Consolas", 11, "bold"), 
                 bg="#141414", fg="#CCCCCC", anchor="w").pack(side="left", padx=5)
     
     def open_case_details(self, case_id):

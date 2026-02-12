@@ -124,6 +124,39 @@ def delete_case(case_id):
     conn.commit()
     conn.close()
 
+def get_case_by_id(case_id):
+    """Get case by ID"""
+    if not os.path.exists(DB_PATH):
+        return None
+    
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT * FROM attack_results WHERE case_id = ?", (case_id,))
+    result = cursor.fetchone()
+    conn.close()
+    
+    return result
+
+def get_case_history(first_name, last_name):
+    """Get all cases for a person"""
+    if not os.path.exists(DB_PATH):
+        return []
+    
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+        SELECT * FROM attack_results 
+        WHERE first_name = ? AND last_name = ?
+        ORDER BY timestamp DESC
+    """, (first_name, last_name))
+    
+    results = cursor.fetchall()
+    conn.close()
+    
+    return results
+
 def get_attack_history(limit=50):
     """Retrieve attack history from database"""
     if not os.path.exists(DB_PATH):

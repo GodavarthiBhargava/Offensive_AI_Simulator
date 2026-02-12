@@ -9,7 +9,7 @@ class WelcomeScreen:
     def __init__(self, root, on_case_ready):
         self.root = root
         self.on_case_ready = on_case_ready
-        self.root.title("Skill Palavar - Digital Forensics Simulator")
+        self.root.title("SECURENETRA - Digital Forensics Simulator")
         self.root.geometry("1200x700")
         self.root.configure(bg="#2E2E2E")
         
@@ -30,58 +30,43 @@ class WelcomeScreen:
         # LEFT: Logo/Emoji
         left_frame = tk.Frame(navbar, bg="#1F1F1F")
         left_frame.pack(side="left", padx=20, pady=15)
-        tk.Label(left_frame, text="🛡️", font=("Segoe UI Emoji", 20), bg="#1F1F1F").pack()
+        tk.Label(left_frame, text="🛡️", font=("Segoe UI Emoji", 24, "bold"), bg="#1F1F1F").pack()
         
         # CENTER: Project Name
         center_frame = tk.Frame(navbar, bg="#1F1F1F")
         center_frame.place(relx=0.5, rely=0.5, anchor="center")
-        tk.Label(center_frame, text="Skill Palavar - Digital Forensics Simulator",
-                font=FontLoader.get_font(12, "bold"), bg="#1F1F1F", fg="#00FF66").pack()
+        tk.Label(center_frame, text="SECURENETRA - Digital Forensics Simulator",
+                font=("Courier New", 14, "bold"), bg="#1F1F1F", fg="#00FF66").pack()
         
         # RIGHT: Live Date
         right_frame = tk.Frame(navbar, bg="#1F1F1F")
         right_frame.pack(side="right", padx=20, pady=15)
         live_date = datetime.now().strftime("%A, %d %B %Y")
         tk.Label(right_frame, text=live_date,
-                font=FontLoader.get_font(9), bg="#1F1F1F", fg="#00FF66").pack()
+                font=("Courier New", 11, "bold"), bg="#1F1F1F", fg="#00FF66").pack()
         
-        # Bottom border
-        tk.Frame(root, bg="#003300", height=1).pack(fill="x")
-        
-        # Main content with padding
-        content = tk.Frame(root, bg="#2E2E2E")
-        content.pack(fill="both", expand=True, padx=40, pady=40)
-        
-        # Container for split layout
-        split_container = tk.Frame(content, bg="#1F1F1F")
-        split_container.pack(fill="both", expand=True)
-        
-        # Left side - Background image (50%)
-        left_frame = tk.Frame(split_container, bg="#1F1F1F")
-        left_frame.pack(side="left", fill="both", expand=True)
-        
+        # Load welcome image as full background
         try:
             if os.path.exists("ui/assessts/welcome.jpg") or os.path.exists("ui/assessts/welcome.png"):
                 bg_path = "ui/assessts/welcome.jpg" if os.path.exists("ui/assessts/welcome.jpg") else "ui/assessts/welcome.png"
                 img = Image.open(bg_path)
-                img = img.resize((500, 600), Image.Resampling.LANCZOS)
+                img = img.resize((1200, 650), Image.Resampling.LANCZOS)
                 photo = ImageTk.PhotoImage(img)
-                bg_label = tk.Label(left_frame, image=photo, bg="#1F1F1F")
+                bg_label = tk.Label(root, image=photo)
                 bg_label.image = photo
-                bg_label.pack(fill="both", expand=True, padx=10, pady=10)
+                bg_label.place(x=0, y=51, width=1200, height=649)
         except Exception as e:
-            tk.Label(left_frame, text="SKILL PALAVAR", font=FontLoader.get_font(24, "bold"),
-                    bg="#1F1F1F", fg="#00FF66").pack(expand=True)
+            pass
         
-        # Middle separator
-        tk.Frame(split_container, bg="#003300", width=2).pack(side="left", fill="y", padx=20)
+        # Bottom border
+        tk.Frame(root, bg="#003300", height=1).pack(fill="x")
         
-        # Right side - Options panel (50%)
-        right_frame = tk.Frame(split_container, bg="#1F1F1F")
-        right_frame.pack(side="right", fill="both", expand=True, padx=20, pady=40)
+        # Right side - Options panel overlay (centered)
+        right_frame = tk.Frame(root, bg="#1F1F1F")
+        right_frame.place(relx=0.5, rely=0.5, anchor="center", width=500, height=450)
         
-        tk.Label(right_frame, text="WELCOME TO SKILL PALAVAR", 
-                font=FontLoader.get_font(16, "bold"), bg="#1F1F1F", fg="#00FF66").pack(pady=40)
+        tk.Label(right_frame, text="WELCOME TO SECURENETRA", 
+                font=("Courier New", 20, "bold"), bg="#1F1F1F", fg="#00FF66").pack(pady=40)
         
         options_frame = tk.Frame(right_frame, bg="#1F1F1F")
         options_frame.pack(expand=True, fill="both", padx=20)
@@ -91,7 +76,7 @@ class WelcomeScreen:
         self._create_option(options_frame, "Open Recent Case", self.open_recent_case)
     
     def _create_option(self, parent, text, command):
-        btn = tk.Button(parent, text=text, font=FontLoader.get_font(11, "bold"),
+        btn = tk.Button(parent, text=text, font=("Courier New", 13, "bold"),
                        bg="#000000", fg="#00FF66", relief="solid", bd=2,
                        activebackground="#003300", activeforeground="#00FF66",
                        cursor="hand2", command=command, height=2)
@@ -115,14 +100,14 @@ class WelcomeScreen:
         y = (modal.winfo_screenheight() // 2) - (300 // 2)
         modal.geometry(f"500x300+{x}+{y}")
         
-        tk.Label(modal, text="CREATE NEW CASE", font=FontLoader.get_font(14, "bold"),
+        tk.Label(modal, text="CREATE NEW CASE", font=("Courier New", 16, "bold"),
                 bg="#2E2E2E", fg="#00FF66").pack(pady=30)
         
         # Case name input
-        tk.Label(modal, text="CASE NAME:", font=FontLoader.get_font(10),
+        tk.Label(modal, text="CASE NAME:", font=("Courier New", 12, "bold"),
                 bg="#2E2E2E", fg="#00FF66").pack(pady=(20, 5))
         
-        case_entry = tk.Entry(modal, font=FontLoader.get_font(10), bg="#000000", fg="#00FF66",
+        case_entry = tk.Entry(modal, font=("Courier New", 12, "bold"), bg="#000000", fg="#00FF66",
                              relief="solid", bd=1, insertbackground="#00FF66")
         case_entry.pack(padx=50, fill="x", ipady=8)
         case_entry.insert(0, f"Case_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
@@ -145,13 +130,13 @@ class WelcomeScreen:
         btn_frame = tk.Frame(modal, bg="#2E2E2E")
         btn_frame.pack(pady=30)
         
-        create_btn = tk.Button(btn_frame, text="CREATE", font=FontLoader.get_font(10, "bold"),
+        create_btn = tk.Button(btn_frame, text="CREATE", font=("Courier New", 12, "bold"),
                               bg="#000000", fg="#00FF66", relief="solid", bd=2,
                               activebackground="#003300", cursor="hand2", command=create,
                               width=15, height=2)
         create_btn.pack(side="left", padx=5)
         
-        cancel_btn = tk.Button(btn_frame, text="CANCEL", font=FontLoader.get_font(10, "bold"),
+        cancel_btn = tk.Button(btn_frame, text="CANCEL", font=("Courier New", 12, "bold"),
                               bg="#000000", fg="#00FF66", relief="solid", bd=2,
                               activebackground="#003300", cursor="hand2", command=modal.destroy,
                               width=15, height=2)
@@ -192,71 +177,85 @@ class Dashboard:
         # LEFT: Logo/Emoji
         left_frame = tk.Frame(navbar, bg="#1F1F1F")
         left_frame.pack(side="left", padx=20, pady=15)
-        tk.Label(left_frame, text="🛡️", font=("Segoe UI Emoji", 20), bg="#1F1F1F").pack()
+        tk.Label(left_frame, text="🛡️", font=("Segoe UI Emoji", 24, "bold"), bg="#1F1F1F").pack()
         
         # CENTER: Project Name
         center_frame = tk.Frame(navbar, bg="#1F1F1F")
         center_frame.place(relx=0.5, rely=0.5, anchor="center")
-        tk.Label(center_frame, text="Skill Palavar - Digital Forensics Simulator",
-                font=FontLoader.get_font(12, "bold"), bg="#1F1F1F", fg="#00FF66").pack()
+        tk.Label(center_frame, text="SECURENETRA - Digital Forensics Simulator",
+                font=("Courier New", 14, "bold"), bg="#1F1F1F", fg="#00FF66").pack()
         
-        # RIGHT: Case Name and Live Date
+        # RIGHT: Case Name, History Button and Live Date
         right_frame = tk.Frame(navbar, bg="#1F1F1F")
         right_frame.pack(side="right", padx=20, pady=15)
-        tk.Label(right_frame, text=f"Case: {case_name}", font=FontLoader.get_font(9),
+        
+        # History button
+        history_btn = tk.Button(right_frame, text="📁 HISTORY", font=("Courier New", 10, "bold"),
+                               bg="#000000", fg="#00FF66", relief="solid", bd=1,
+                               activebackground="#003300", cursor="hand2",
+                               command=self.open_case_history, padx=10, pady=5)
+        history_btn.pack(side="top", pady=(0, 5))
+        history_btn.bind("<Enter>", lambda e: history_btn.config(bg="#003300"))
+        history_btn.bind("<Leave>", lambda e: history_btn.config(bg="#000000"))
+        
+        tk.Label(right_frame, text=f"Case: {case_name}", font=("Courier New", 9, "bold"),
                 bg="#1F1F1F", fg="#00FF66").pack()
         live_date = datetime.now().strftime("%A, %d %B %Y")
-        tk.Label(right_frame, text=live_date, font=FontLoader.get_font(8),
+        tk.Label(right_frame, text=live_date, font=("Courier New", 8, "bold"),
                 bg="#1F1F1F", fg="#00FF66").pack()
         
         # Bottom border
         tk.Frame(root, bg="#003300", height=1).pack(fill="x")
         
-        # Main content
-        content = tk.Frame(root, bg="#2E2E2E")
-        content.pack(fill="both", expand=True, padx=20, pady=20)
+        # Main layout: Sidebar + Content
+        main_container = tk.Frame(root, bg="#2E2E2E")
+        main_container.pack(fill="both", expand=True)
         
-        tk.Label(content, text="SELECT MODULE", font=FontLoader.get_font(14, "bold"),
-                bg="#2E2E2E", fg="#00FF66").pack(pady=15)
+        # LEFT SIDEBAR
+        sidebar = tk.Frame(main_container, bg="#1F1F1F", width=280)
+        sidebar.pack(side="left", fill="y")
+        sidebar.pack_propagate(False)
         
-        # Module grid
-        grid = tk.Frame(content, bg="#2E2E2E")
-        grid.pack(fill="both", expand=True)
+        tk.Label(sidebar, text="MODULES", font=("Courier New", 16, "bold"),
+                bg="#1F1F1F", fg="#00FF66", pady=20).pack()
+        
+        tk.Frame(sidebar, bg="#003300", height=2).pack(fill="x", padx=10)
         
         modules = [
-            ("Password Attack Simulation", self.open_password_module),
-            ("Case Files", self.open_case_history),
-            ("AI Learning & Behaviour Analysis", None),
-            ("Awareness Training & Feedback", None)
+            ("Password Attack Simulator", self.open_password_module),
+            ("Phishing Simulator", None),
+            ("Social Engineering Lab", None),
+            ("Email Analyzer", None),
+            ("AI Intelligence Engine", None),
+            ("Risk & Reports", None),
+            ("Awareness Training", None)
         ]
         
-        for i, (name, cmd) in enumerate(modules):
-            row, col = i // 2, i % 2
-            self._create_module_card(grid, name, cmd, row, col, i in [0, 1])
+        for name, cmd in modules:
+            self._create_sidebar_item(sidebar, name, cmd, cmd is not None)
+        
+        # RIGHT: Content Area
+        content = tk.Frame(main_container, bg="#2E2E2E")
+        content.pack(side="right", fill="both", expand=True, padx=20, pady=20)
+        
+        tk.Label(content, text="Welcome to Case Analysis", font=("Courier New", 18, "bold"),
+                bg="#2E2E2E", fg="#00FF66").pack(pady=50)
+        tk.Label(content, text="Select a module from the sidebar to begin", font=("Courier New", 12, "bold"),
+                bg="#2E2E2E", fg="#666666").pack()
     
-    def _create_module_card(self, parent, title, command, row, col, enabled):
-        card = tk.Frame(parent, bg="#1F1F1F" if enabled else "#3E3E3E",
-                       relief="solid", bd=2, cursor="hand2" if enabled else "arrow")
-        card.grid(row=row, column=col, padx=10, pady=10, sticky="nsew")
+    def _create_sidebar_item(self, parent, text, command, enabled):
+        btn = tk.Button(parent, text=text, font=("Courier New", 11, "bold"),
+                       bg="#000000" if enabled else "#2E2E2E",
+                       fg="#00FF66" if enabled else "#666666",
+                       activebackground="#003300" if enabled else "#2E2E2E",
+                       relief="flat", bd=0, anchor="w", padx=20, pady=15,
+                       cursor="hand2" if enabled else "arrow",
+                       command=command if enabled else None)
+        btn.pack(fill="x", padx=10, pady=5)
         
-        parent.grid_rowconfigure(row, weight=1)
-        parent.grid_columnconfigure(col, weight=1)
-        
-        tk.Label(card, text=title, font=FontLoader.get_font(11, "bold"),
-                bg=card["bg"], fg="#00FF66" if enabled else "#666666").pack(pady=40)
-        
-        status = "ACTIVE" if enabled else "COMING SOON"
-        tk.Label(card, text=status, font=FontLoader.get_font(9),
-                bg=card["bg"], fg="#00FF66" if enabled else "#666666").pack(pady=(0, 30))
-        
-        if enabled and command:
-            def on_enter(e):
-                card.config(bg="#003300")
-            def on_leave(e):
-                card.config(bg="#1F1F1F")
-            card.bind("<Enter>", on_enter)
-            card.bind("<Leave>", on_leave)
-            card.bind("<Button-1>", lambda e: command())
+        if enabled:
+            btn.bind("<Enter>", lambda e: btn.config(bg="#003300"))
+            btn.bind("<Leave>", lambda e: btn.config(bg="#000000"))
     
     def open_password_module(self):
         from ui.module1_ui import PasswordAttackModule
@@ -275,7 +274,7 @@ class SplashScreen:
     def __init__(self, root, on_complete):
         self.root = root
         self.on_complete = on_complete
-        self.root.title("Skill Palavar - Digital Forensics Simulator")
+        self.root.title("SECURENETRA - Digital Forensics Simulator")
         self.root.geometry("1200x700")
         self.root.configure(bg="#2E2E2E")
         
@@ -292,45 +291,51 @@ class SplashScreen:
         container = tk.Frame(root, bg="#1F1F1F")
         container.pack(fill="both", expand=True)
         
-        # Load and display welcome image
+        # Load and display loading image
         try:
-            if os.path.exists("ui/assessts/welcome.jpg") or os.path.exists("ui/assessts/welcome.png"):
-                bg_path = "ui/assessts/welcome.jpg" if os.path.exists("ui/assessts/welcome.jpg") else "ui/assessts/welcome.png"
+            if os.path.exists("ui/assessts/loadingpage.jpg") or os.path.exists("ui/assessts/loading.jpg") or os.path.exists("ui/assessts/loading.png"):
+                if os.path.exists("ui/assessts/loadingpage.jpg"):
+                    bg_path = "ui/assessts/loadingpage.jpg"
+                elif os.path.exists("ui/assessts/loading.jpg"):
+                    bg_path = "ui/assessts/loading.jpg"
+                else:
+                    bg_path = "ui/assessts/loading.png"
                 img = Image.open(bg_path)
                 img = img.resize((1200, 700), Image.Resampling.LANCZOS)
                 photo = ImageTk.PhotoImage(img)
                 bg_label = tk.Label(container, image=photo, bg="#1F1F1F")
                 bg_label.image = photo
                 bg_label.place(x=0, y=0, relwidth=1, relheight=1)
-        except:
-            pass
+        except Exception as e:
+            print(f"Error loading image: {e}")
         
-        # Loading indicator and text overlay
-        overlay = tk.Frame(container, bg="#1F1F1F")
-        overlay.place(relx=0.5, rely=0.85, anchor="center")
-        
+        # Loading indicator and text overlay (transparent, directly on image)
         # Loading text
-        loading_label = tk.Label(overlay, text="Initializing Secure Simulation Environment...",
-                                font=FontLoader.get_font(11), bg="#1F1F1F", fg="#00FF66")
-        loading_label.pack(pady=10)
+        loading_label = tk.Label(container, text="Initializing Secure Simulation Environment...",
+                                font=("Courier New", 13, "bold"), bg="#1F1F1F", fg="#00FF66")
+        loading_label.place(relx=0.5, rely=0.82, anchor="center")
         
-        # Loading animation dots
-        self.dots_label = tk.Label(overlay, text="", font=FontLoader.get_font(14, "bold"),
-                                   bg="#1F1F1F", fg="#00FF66")
-        self.dots_label.pack()
+        # Progress bar (cylinder filling effect)
+        self.progress_canvas = tk.Canvas(container, width=300, height=30, bg="#1F1F1F", highlightthickness=0)
+        self.progress_canvas.place(relx=0.5, rely=0.88, anchor="center")
         
-        self.dot_count = 0
-        self.animate_loading()
+        # Draw progress bar border
+        self.progress_canvas.create_rectangle(2, 2, 298, 28, outline="#00FF66", width=2)
+        
+        # Progress fill
+        self.progress_fill = self.progress_canvas.create_rectangle(4, 4, 4, 26, fill="#00FF66", outline="")
+        
+        self.progress = 0
+        self.animate_progress()
         
         # Transition after 3.5 seconds
         root.after(3500, self.transition_to_welcome)
     
-    def animate_loading(self):
-        dots = "." * (self.dot_count % 4)
-        self.dots_label.config(text=dots)
-        self.dot_count += 1
-        if self.dot_count < 15:
-            self.root.after(250, self.animate_loading)
+    def animate_progress(self):
+        if self.progress < 294:
+            self.progress += 8
+            self.progress_canvas.coords(self.progress_fill, 4, 4, self.progress, 26)
+            self.root.after(100, self.animate_progress)
     
     def transition_to_welcome(self):
         # Fade out effect

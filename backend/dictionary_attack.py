@@ -1,4 +1,4 @@
-from backend.hashing_utils import hash_password
+from backend.hashing import hash_password
 
 def dictionary_attack_plain(password, wordlist_files, first_name, last_name):
     """Dictionary attack for plain password"""

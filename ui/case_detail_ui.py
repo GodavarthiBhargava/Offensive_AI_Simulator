@@ -27,7 +27,7 @@ class CaseDetailUI:
         navbar.pack_propagate(False)
         
         tk.Label(navbar, text=f"Case File: {case_id}",
-                font=("Consolas", 12, "bold"), bg="#1F1F1F", fg="#00FF66").pack(side="left", padx=20, pady=15)
+                font=("Consolas", 14, "bold"), bg="#1F1F1F", fg="#00FF66").pack(side="left", padx=20, pady=15)
         
         # Bottom border
         tk.Frame(window, bg="#003300", height=1).pack(fill="x")
@@ -40,12 +40,22 @@ class CaseDetailUI:
         case = get_case_by_id(case_id)
         
         if not case:
-            tk.Label(main_frame, text="Case not found", font=("Consolas", 14),
+            tk.Label(main_frame, text="Case not found", font=("Consolas", 16, "bold"),
                     bg="#2E2E2E", fg="#FF0000").pack(pady=50)
             return
         
         # Parse case data
-        _, case_id, first_name, last_name, password_input, password_type, attack_type, algorithm, result, cracked_pwd, timestamp = case
+        case_data = case
+        case_id = case_data[1]
+        first_name = case_data[2]
+        last_name = case_data[3]
+        password_input = case_data[4]
+        password_type = case_data[5]
+        attack_type = case_data[6]
+        algorithm = case_data[7]
+        result = case_data[11]
+        cracked_pwd = case_data[12]
+        timestamp = case_data[13]
         
         # Case Information Section
         info_frame = self._create_section(main_frame, "CASE INFORMATION")
@@ -72,25 +82,25 @@ class CaseDetailUI:
         status_color = "#00FF66" if "Cracked" in result or "SUCCESS" in result else "#FF4444"
         status_text = "CRACKED" if "Cracked" in result or "SUCCESS" in result else "NOT CRACKED"
         
-        tk.Label(result_grid, text="Status:", font=("Consolas", 10, "bold"),
+        tk.Label(result_grid, text="Status:", font=("Consolas", 12, "bold"),
                 bg="#1F1F1F", fg="#00FF66").grid(row=0, column=0, sticky="w", pady=8, padx=10)
-        tk.Label(result_grid, text=status_text, font=("Consolas", 12, "bold"),
+        tk.Label(result_grid, text=status_text, font=("Consolas", 14, "bold"),
                 bg="#1F1F1F", fg=status_color).grid(row=0, column=1, sticky="w", pady=8, padx=10)
         
         # Result details
-        tk.Label(result_grid, text="Details:", font=("Consolas", 10, "bold"),
+        tk.Label(result_grid, text="Details:", font=("Consolas", 12, "bold"),
                 bg="#1F1F1F", fg="#00FF66").grid(row=1, column=0, sticky="nw", pady=8, padx=10)
         
-        result_text = tk.Text(result_grid, font=("Consolas", 9), bg="#000000", fg="#00FF66",
+        result_text = tk.Text(result_grid, font=("Consolas", 11, "bold"), bg="#000000", fg="#00FF66",
                              height=3, width=70, relief="solid", bd=1, wrap=tk.WORD)
         result_text.insert("1.0", result)
         result_text.config(state="disabled")
         result_text.grid(row=1, column=1, sticky="w", pady=8, padx=10)
         
         if cracked_pwd:
-            tk.Label(result_grid, text="Cracked Password:", font=("Consolas", 10, "bold"),
+            tk.Label(result_grid, text="Cracked Password:", font=("Consolas", 12, "bold"),
                     bg="#1F1F1F", fg="#00FF66").grid(row=2, column=0, sticky="w", pady=8, padx=10)
-            tk.Label(result_grid, text=cracked_pwd, font=("Consolas", 11, "bold"),
+            tk.Label(result_grid, text=cracked_pwd, font=("Consolas", 13, "bold"),
                     bg="#1F1F1F", fg="#00FF66").grid(row=2, column=1, sticky="w", pady=8, padx=10)
         
         # History Timeline Section
@@ -104,37 +114,41 @@ class CaseDetailUI:
         
         if len(history) > 1:
             tk.Label(timeline_container, text=f"Total Attempts: {len(history)}", 
-                    font=("Consolas", 10, "bold"), bg="#1F1F1F", fg="#00FF66").pack(anchor="w", pady=(0, 10))
+                    font=("Consolas", 12, "bold"), bg="#1F1F1F", fg="#00FF66").pack(anchor="w", pady=(0, 10))
             
             # Timeline text area
-            timeline_text = scrolledtext.ScrolledText(timeline_container, font=("Consolas", 9),
+            timeline_text = scrolledtext.ScrolledText(timeline_container, font=("Consolas", 11, "bold"),
                                                      bg="#000000", fg="#00FF66", height=10,
                                                      relief="solid", bd=1, wrap=tk.WORD)
             timeline_text.pack(fill="both", expand=True)
             
             for idx, h in enumerate(history, 1):
-                h_case_id, h_timestamp, h_attack, h_algo, h_result = h[1], h[10], h[6], h[7], h[8]
+                h_case_id = h[1]
+                h_timestamp = h[13]
+                h_attack = h[6]
+                h_algo = h[7]
+                h_result = h[11]
                 status_icon = "✓" if "Cracked" in h_result or "SUCCESS" in h_result else "✗"
                 
                 timeline_text.insert(tk.END, f"[{h_timestamp}] {status_icon} {h_attack}", "header")
                 timeline_text.insert(tk.END, f" - {h_algo if h_algo else 'N/A'}\n")
                 timeline_text.insert(tk.END, f"  Case: {h_case_id} | Result: {h_result}\n\n")
             
-            timeline_text.tag_config("header", foreground="#00d9ff", font=("Consolas", 9, "bold"))
+            timeline_text.tag_config("header", foreground="#00d9ff", font=("Consolas", 11, "bold"))
             timeline_text.config(state="disabled")
         else:
             tk.Label(timeline_container, text="No previous attempts found for this person.",
-                    font=("Consolas", 10), bg="#1F1F1F", fg="#666666").pack(pady=20)
+                    font=("Consolas", 12, "bold"), bg="#1F1F1F", fg="#666666").pack(pady=20)
         
         # Close button
-        close_btn = tk.Button(main_frame, text="CLOSE", font=("Consolas", 10, "bold"),
+        close_btn = tk.Button(main_frame, text="CLOSE", font=("Consolas", 12, "bold"),
                              bg="#000000", fg="#00FF66", relief="solid", bd=2,
                              cursor="hand2", command=window.destroy, width=20, height=2)
         close_btn.pack(pady=20)
     
     def _create_section(self, parent, title):
         """Create a styled section frame"""
-        frame = tk.LabelFrame(parent, text=title, font=("Consolas", 11, "bold"),
+        frame = tk.LabelFrame(parent, text=title, font=("Consolas", 13, "bold"),
                              bg="#1F1F1F", fg="#00FF66", relief="solid", bd=2,
                              labelanchor="nw", padx=5, pady=5)
         frame.pack(fill="both", expand=True, pady=10)
@@ -142,9 +156,9 @@ class CaseDetailUI:
     
     def _add_field(self, parent, label, value, row):
         """Add a field to the grid"""
-        tk.Label(parent, text=label, font=("Consolas", 10, "bold"),
+        tk.Label(parent, text=label, font=("Consolas", 12, "bold"),
                 bg="#1F1F1F", fg="#00FF66").grid(row=row, column=0, sticky="w", pady=8, padx=10)
-        tk.Label(parent, text=value, font=("Consolas", 10),
+        tk.Label(parent, text=value, font=("Consolas", 12, "bold"),
                 bg="#1F1F1F", fg="#FFFFFF").grid(row=row, column=1, sticky="w", pady=8, padx=10)
 
 

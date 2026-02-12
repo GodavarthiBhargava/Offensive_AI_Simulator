@@ -3,7 +3,7 @@ from tkinter import ttk, messagebox, filedialog
 from backend.dictionary_attack import dictionary_attack_plain, dictionary_attack_hash
 from backend.brute_force import brute_force_attack
 from backend.ai_attack import ai_attack_plain, ai_attack_hash
-from backend.hashing_utils import hash_password
+from backend.hashing import hash_password
 from backend.database import init_database, save_case_record, generate_case_id
 import time
 import threading
@@ -39,7 +39,7 @@ class PasswordAttackModule:
         navbar.pack_propagate(False)
         
         tk.Label(navbar, text="Skill Palavar - Module 1: Password Attack Simulation",
-                font=("Consolas", 12), bg="#1F1F1F", fg="#00FF66").pack(side="left", padx=20, pady=15)
+                font=("Consolas", 14, "bold"), bg="#1F1F1F", fg="#00FF66").pack(side="left", padx=20, pady=15)
         
         # Bottom border
         tk.Frame(window, bg="#003300", height=1).pack(fill="x")
@@ -90,11 +90,11 @@ class PasswordAttackModule:
         # Hash Algorithm (hidden by default)
         self.hash_algo_var = tk.StringVar(value="MD5")
         self.hash_algo_frame = tk.Frame(left_panel, bg="#2E2E2E")
-        tk.Label(self.hash_algo_frame, text="HASH ALGORITHM", font=("Consolas", 10),
+        tk.Label(self.hash_algo_frame, text="HASH ALGORITHM", font=("Consolas", 12, "bold"),
                 bg="#2E2E2E", fg="#00FF66").pack(anchor="w", pady=(0, 5))
         hash_combo = ttk.Combobox(self.hash_algo_frame, textvariable=self.hash_algo_var,
                                  values=["MD5", "SHA256"], state="readonly",
-                                 font=("Consolas", 10), style='Custom.TCombobox', height=10)
+                                 font=("Consolas", 12, "bold"), style='Custom.TCombobox', height=10)
         hash_combo.pack(fill="x", ipady=8)
         self.hash_algo_frame.pack_forget()
         
@@ -105,17 +105,17 @@ class PasswordAttackModule:
         
         # Dictionary Upload (shown only for Dictionary Attack)
         self.dict_upload_frame = tk.Frame(left_panel, bg="#2E2E2E")
-        tk.Label(self.dict_upload_frame, text="WORDLIST FILES", font=("Consolas", 10),
+        tk.Label(self.dict_upload_frame, text="WORDLIST FILES", font=("Consolas", 12, "bold"),
                 bg="#2E2E2E", fg="#00FF66").pack(anchor="w", pady=(0, 5))
         
         upload_btn = tk.Button(self.dict_upload_frame, text="Upload Wordlist Files",
-                              font=("Consolas", 9, "bold"), bg="#000000", fg="#00FF66",
+                              font=("Consolas", 11, "bold"), bg="#000000", fg="#00FF66",
                               activebackground="#003300", relief="solid", bd=1,
                               cursor="hand2", command=self.upload_wordlists)
         upload_btn.pack(fill="x", ipady=5)
         
         self.wordlist_label = tk.Label(self.dict_upload_frame, text="No files uploaded",
-                                       font=("Consolas", 8), bg="#2E2E2E", fg="#666666")
+                                       font=("Consolas", 10, "bold"), bg="#2E2E2E", fg="#666666")
         self.wordlist_label.pack(pady=(5, 0))
         self.dict_upload_frame.pack(fill="x", pady=(0, 15))
         
@@ -124,7 +124,7 @@ class PasswordAttackModule:
         btn_frame.pack(fill="x", pady=15)
         
         self.crack_btn = tk.Button(btn_frame, text="CRACK PASSWORD",
-                                   font=("Consolas", 11, "bold"),
+                                   font=("Consolas", 13, "bold"),
                                    bg="#000000", fg="#00FF66",
                                    activebackground="#003300", activeforeground="#00FF66",
                                    relief="solid", bd=2, height=2,
@@ -139,7 +139,7 @@ class PasswordAttackModule:
         console_container.pack(fill="both", expand=True)
         
         self.console = tk.Text(console_container, bg="#000000", fg="#00FF00",
-                              font=("Consolas", 10), insertbackground="#00FF00",
+                              font=("Consolas", 12, "bold"), insertbackground="#00FF00",
                               relief="flat", state="disabled", padx=15, pady=15)
         self.console.pack(side="left", fill="both", expand=True)
         
@@ -149,7 +149,7 @@ class PasswordAttackModule:
         
         # Open output button
         open_btn = tk.Button(right_panel, text="Open Output in New Window",
-                            font=("Consolas", 9), bg="#000000", fg="#00FF66",
+                            font=("Consolas", 11, "bold"), bg="#000000", fg="#00FF66",
                             relief="solid", bd=1, height=1, cursor="hand2")
         open_btn.pack(fill="x", pady=(10, 0))
         
@@ -160,10 +160,10 @@ class PasswordAttackModule:
         frame = tk.Frame(parent, bg="#2E2E2E")
         frame.pack(fill="x", pady=(0, 15))
         
-        tk.Label(frame, text=label_text, font=("Consolas", 10),
+        tk.Label(frame, text=label_text, font=("Consolas", 12, "bold"),
                 bg="#2E2E2E", fg="#00FF66").pack(anchor="w", pady=(0, 5))
         
-        entry = tk.Entry(frame, font=("Consolas", 10), bg="#000000", fg="#00FF66",
+        entry = tk.Entry(frame, font=("Consolas", 12, "bold"), bg="#000000", fg="#00FF66",
                         relief="solid", bd=1, insertbackground="#00FF66", show=show)
         entry.pack(fill="x", ipady=8)
         entry.config(highlightbackground="#003300", highlightcolor="#00FF66", highlightthickness=1)
@@ -175,11 +175,11 @@ class PasswordAttackModule:
         frame = tk.Frame(parent, bg="#2E2E2E")
         frame.pack(fill="x", pady=(0, 15))
         
-        tk.Label(frame, text=label_text, font=("Consolas", 10),
+        tk.Label(frame, text=label_text, font=("Consolas", 12, "bold"),
                 bg="#2E2E2E", fg="#00FF66").pack(anchor="w", pady=(0, 5))
         
         combo = ttk.Combobox(frame, textvariable=variable, values=values,
-                            state="readonly", font=("Consolas", 10),
+                            state="readonly", font=("Consolas", 12, "bold"),
                             style='Custom.TCombobox', height=10)
         combo.pack(fill="x", ipady=8)
         
