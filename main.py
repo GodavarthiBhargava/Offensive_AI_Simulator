@@ -212,7 +212,7 @@ class Dashboard:
         main_container.pack(fill="both", expand=True)
         
         # LEFT SIDEBAR
-        sidebar = tk.Frame(main_container, bg="#1F1F1F", width=280)
+        sidebar = tk.Frame(main_container, bg="#1F1F1F", width=320)
         sidebar.pack(side="left", fill="y")
         sidebar.pack_propagate(False)
         
@@ -223,13 +223,13 @@ class Dashboard:
         
         modules = [
             ("Password Attack Simulator", self.open_password_module),
-            ("AI Behavior Engine", self.open_ai_behavior),
-            ("Phishing Campaign Simulator", self.open_phishing_campaign),
-            ("Voice / Social Engineering", self.open_social_engineering),
             ("Email & Message Analyzer", self.open_email_analyzer),
             ("Domain Verification", self.open_domain_verification),
+            ("AI Behavior Engine", self.open_ai_behavior),
+            ("Phishing Campaign Simulator", self.open_phishing_campaign),
             ("Risk & Analytics Dashboard", self.open_analytics),
-            ("Awareness Training", self.open_awareness_training)
+            ("Awareness Training", self.open_awareness_training),
+            ("Voice / Social Engineering", self.open_social_engineering)
         ]
         
         for name, cmd in modules:

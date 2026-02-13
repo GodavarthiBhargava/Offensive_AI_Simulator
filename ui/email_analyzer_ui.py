@@ -4,6 +4,7 @@ import sqlite3
 import os
 from datetime import datetime
 import re
+from backend.phishing_detector import PhishingDetector
 
 class EmailAnalyzerModule:
     def __init__(self, window):
@@ -13,6 +14,7 @@ class EmailAnalyzerModule:
         self.window.configure(bg="#2E2E2E")
         
         self.init_analyzer_db()
+        self.detector = PhishingDetector()
         
         # Top bar
         navbar = tk.Frame(window, bg="#1F1F1F", height=50)
@@ -32,27 +34,44 @@ class EmailAnalyzerModule:
         left_panel = tk.Frame(content, bg="#1F1F1F", relief="solid", bd=2)
         left_panel.pack(side="left", fill="both", expand=True, padx=(0, 10))
         
-        tk.Label(left_panel, text="📧 EMAIL INPUT", font=("Consolas", 14, "bold"),
+        tk.Label(left_panel, text="📧 MESSAGE INPUT", font=("Consolas", 14, "bold"),
                 bg="#1F1F1F", fg="#00FF66").pack(pady=15)
+        
+        # Message type selection
+        type_frame = tk.Frame(left_panel, bg="#1F1F1F")
+        type_frame.pack(fill="x", padx=10, pady=(0, 10))
+        
+        tk.Label(type_frame, text="Message Type:", font=("Consolas", 11, "bold"),
+                bg="#1F1F1F", fg="#00FF66").pack(anchor="w", pady=(0, 5))
+        
+        self.message_type = tk.StringVar(value="Email")
+        type_combo = ttk.Combobox(type_frame, textvariable=self.message_type,
+                                 values=["Email", "WhatsApp", "SMS"], state="readonly",
+                                 font=("Consolas", 11, "bold"))
+        type_combo.pack(fill="x", ipady=5)
+        type_combo.bind("<<ComboboxSelected>>", self.on_type_change)
         
         # Email details
         details_frame = tk.Frame(left_panel, bg="#1F1F1F")
         details_frame.pack(fill="x", padx=10, pady=(0, 10))
         
-        tk.Label(details_frame, text="From:", font=("Consolas", 11, "bold"),
-                bg="#1F1F1F", fg="#00FF66").pack(anchor="w", pady=(0, 5))
+        self.from_label = tk.Label(details_frame, text="From:", font=("Consolas", 11, "bold"),
+                bg="#1F1F1F", fg="#00FF66")
+        self.from_label.pack(anchor="w", pady=(0, 5))
         self.from_entry = tk.Entry(details_frame, font=("Consolas", 11, "bold"),
                                    bg="#000000", fg="#00FF66", relief="solid", bd=1)
         self.from_entry.pack(fill="x", ipady=5, pady=(0, 10))
         
-        tk.Label(details_frame, text="Subject:", font=("Consolas", 11, "bold"),
-                bg="#1F1F1F", fg="#00FF66").pack(anchor="w", pady=(0, 5))
+        self.subject_label = tk.Label(details_frame, text="Subject:", font=("Consolas", 11, "bold"),
+                bg="#1F1F1F", fg="#00FF66")
+        self.subject_label.pack(anchor="w", pady=(0, 5))
         self.subject_entry = tk.Entry(details_frame, font=("Consolas", 11, "bold"),
                                       bg="#000000", fg="#00FF66", relief="solid", bd=1)
         self.subject_entry.pack(fill="x", ipady=5, pady=(0, 10))
         
-        tk.Label(details_frame, text="Email Body:", font=("Consolas", 11, "bold"),
-                bg="#1F1F1F", fg="#00FF66").pack(anchor="w", pady=(0, 5))
+        self.body_label = tk.Label(details_frame, text="Email Body:", font=("Consolas", 11, "bold"),
+                bg="#1F1F1F", fg="#00FF66")
+        self.body_label.pack(anchor="w", pady=(0, 5))
         
         self.email_body = scrolledtext.ScrolledText(details_frame, font=("Consolas", 10, "bold"),
                                                    bg="#000000", fg="#00FF66",
@@ -110,6 +129,21 @@ class EmailAnalyzerModule:
                               cursor="hand2", command=self.load_sample)
         sample_btn.pack(pady=10, ipady=8, ipadx=20)
     
+    def on_type_change(self, event=None):
+        """Handle message type change"""
+        msg_type = self.message_type.get()
+        
+        if msg_type == "Email":
+            self.from_label.config(text="From:")
+            self.subject_label.pack(anchor="w", pady=(0, 5))
+            self.subject_entry.pack(fill="x", ipady=5, pady=(0, 10))
+            self.body_label.config(text="Email Body:")
+        else:
+            self.from_label.config(text="Sender Name/Number:")
+            self.subject_label.pack_forget()
+            self.subject_entry.pack_forget()
+            self.body_label.config(text="Message Content:")
+    
     def init_analyzer_db(self):
         """Initialize analyzer database"""
         os.makedirs("cases", exist_ok=True)
@@ -133,121 +167,68 @@ class EmailAnalyzerModule:
         conn.close()
     
     def analyze_email(self):
-        """Analyze email for phishing indicators"""
+        """Analyze email/message for phishing indicators"""
+        msg_type = self.message_type.get()
         sender = self.from_entry.get().strip()
-        subject = self.subject_entry.get().strip()
         body = self.email_body.get(1.0, tk.END).strip()
         
-        if not sender or not subject or not body:
-            messagebox.showerror("Error", "Fill all fields")
-            return
-        
-        # Analysis
-        risk_score = 0
-        threats = []
-        
-        # Phishing keywords
-        phishing_keywords = [
-            'urgent', 'verify', 'suspend', 'confirm', 'account', 'password',
-            'click here', 'act now', 'limited time', 'expire', 'security alert',
-            'unusual activity', 'locked', 'update', 'validate', 'prize', 'winner',
-            'congratulations', 'claim', 'refund', 'tax', 'payment'
-        ]
-        
-        body_lower = body.lower()
-        subject_lower = subject.lower()
-        
-        keyword_count = sum(1 for kw in phishing_keywords if kw in body_lower or kw in subject_lower)
-        if keyword_count > 0:
-            risk_score += min(keyword_count * 10, 40)
-            threats.append(f"Phishing keywords detected: {keyword_count}")
-        
-        # Suspicious links
-        urls = re.findall(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', body)
-        if urls:
-            risk_score += min(len(urls) * 15, 30)
-            threats.append(f"Suspicious links found: {len(urls)}")
-            
-            # Check for IP addresses in URLs
-            if any(re.search(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', url) for url in urls):
-                risk_score += 20
-                threats.append("URL contains IP address (highly suspicious)")
-        
-        # Urgency indicators
-        urgency_words = ['urgent', 'immediate', 'now', 'today', 'asap', 'quickly', 'hurry']
-        urgency_count = sum(1 for word in urgency_words if word in body_lower or word in subject_lower)
-        if urgency_count > 0:
-            risk_score += min(urgency_count * 8, 20)
-            threats.append(f"Urgency manipulation detected: {urgency_count} indicators")
-        
-        # Suspicious sender
-        if sender:
-            if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', sender):
-                risk_score += 15
-                threats.append("Invalid email format")
-            elif any(susp in sender.lower() for susp in ['noreply', 'no-reply', 'donotreply']):
-                risk_score += 10
-                threats.append("Suspicious sender address")
-        
-        # Spelling/grammar (simple check)
-        if body.count('!!') > 0 or body.count('???') > 0:
-            risk_score += 10
-            threats.append("Excessive punctuation detected")
-        
-        # Request for personal info
-        personal_info_keywords = ['password', 'ssn', 'social security', 'credit card', 'bank account', 'pin']
-        if any(kw in body_lower for kw in personal_info_keywords):
-            risk_score += 25
-            threats.append("Requests personal/financial information")
-        
-        # Cap risk score at 100
-        risk_score = min(risk_score, 100)
-        
-        # Classification
-        if risk_score >= 70:
-            classification = "MALICIOUS"
-            color = "#FF0000"
-        elif risk_score >= 40:
-            classification = "SUSPICIOUS"
-            color = "#FFAA00"
+        if msg_type == "Email":
+            subject = self.subject_entry.get().strip()
+            if not sender or not subject or not body:
+                messagebox.showerror("Error", "Fill all fields")
+                return
+            result = self.detector.analyze_email(sender, subject, body)
         else:
-            classification = "SAFE"
-            color = "#00FF66"
+            if not sender or not body:
+                messagebox.showerror("Error", "Fill sender and message content")
+                return
+            result = self.detector.analyze_message(sender, body, msg_type)
         
         # Update UI
+        classification = result['classification']
+        risk_score = result['risk_score']
+        
+        color_map = {"SAFE": "#00FF66", "SUSPICIOUS": "#FFAA00", "MALICIOUS": "#FF0000"}
+        color = color_map.get(classification, "#666666")
+        
         self.risk_label.config(text=classification, fg=color)
         self.risk_score_label.config(text=f"Risk Score: {risk_score}/100", fg=color)
         
         # Display analysis
         self.analysis_text.delete(1.0, tk.END)
-        self.analysis_text.insert(tk.END, "🔍 DETAILED ANALYSIS\n")
+        self.analysis_text.insert(tk.END, f"🔍 {msg_type.upper()} ANALYSIS REPORT\n")
         self.analysis_text.insert(tk.END, "="*60 + "\n\n")
         
         self.analysis_text.insert(tk.END, f"📊 Risk Score: {risk_score}/100\n")
-        self.analysis_text.insert(tk.END, f"🏷️ Classification: {classification}\n\n")
+        self.analysis_text.insert(tk.END, f"🏷️ Classification: {classification}\n")
+        self.analysis_text.insert(tk.END, f"⚠️ Risk Level: {result['risk_level']}\n\n")
         
-        if threats:
-            self.analysis_text.insert(tk.END, "⚠️ THREATS DETECTED:\n\n")
-            for i, threat in enumerate(threats, 1):
-                self.analysis_text.insert(tk.END, f"{i}. {threat}\n")
+        # Domain analysis
+        domain = result['domain_analysis']
+        self.analysis_text.insert(tk.END, "🌐 DOMAIN ANALYSIS:\n")
+        self.analysis_text.insert(tk.END, f"  Link Domain: {domain['link_domain']}\n")
+        self.analysis_text.insert(tk.END, f"  Brand Impersonation: {domain['brand_impersonation']}\n")
+        self.analysis_text.insert(tk.END, f"  Domain Risk: {domain['domain_risk_level']}\n")
+        self.analysis_text.insert(tk.END, f"  Trust Status: {domain['trust_status']}\n\n")
+        
+        # Red flags
+        if result['red_flags']:
+            self.analysis_text.insert(tk.END, "⚠️ RED FLAGS DETECTED:\n\n")
+            for i, flag in enumerate(result['red_flags'], 1):
+                self.analysis_text.insert(tk.END, f"{i}. {flag}\n")
             self.analysis_text.insert(tk.END, "\n")
         else:
             self.analysis_text.insert(tk.END, "✅ No obvious threats detected\n\n")
         
-        if urls:
-            self.analysis_text.insert(tk.END, "🔗 LINKS FOUND:\n\n")
-            for url in urls:
-                self.analysis_text.insert(tk.END, f"  • {url}\n")
-            self.analysis_text.insert(tk.END, "\n⚠️ Do not click suspicious links!\n\n")
-        
         self.analysis_text.insert(tk.END, "="*60 + "\n\n")
         
+        # Recommendation
         if classification == "MALICIOUS":
-            self.analysis_text.insert(tk.END, "❌ RECOMMENDATION: DELETE THIS EMAIL\n")
-            self.analysis_text.insert(tk.END, "This email shows strong indicators of phishing/scam.\n")
+            self.analysis_text.insert(tk.END, "❌ RECOMMENDATION: DELETE IMMEDIATELY\n")
+            self.analysis_text.insert(tk.END, "This message shows strong phishing indicators.\n")
         elif classification == "SUSPICIOUS":
             self.analysis_text.insert(tk.END, "⚠️ RECOMMENDATION: PROCEED WITH CAUTION\n")
-            self.analysis_text.insert(tk.END, "Verify sender through official channels before responding.\n")
+            self.analysis_text.insert(tk.END, "Verify through official channels.\n")
         else:
             self.analysis_text.insert(tk.END, "✅ RECOMMENDATION: APPEARS SAFE\n")
             self.analysis_text.insert(tk.END, "However, always remain vigilant.\n")
@@ -256,15 +237,16 @@ class EmailAnalyzerModule:
         conn = sqlite3.connect("cases/email_analysis.db")
         cursor = conn.cursor()
         
+        subject_val = self.subject_entry.get().strip() if msg_type == "Email" else msg_type
         cursor.execute("""
             INSERT INTO analyzed_emails (sender, subject, body, risk_score, classification, threats_found, timestamp)
             VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (sender, subject, body[:500], risk_score, classification, "; ".join(threats), datetime.now().isoformat()))
+        """, (sender, subject_val, body[:500], risk_score, classification, "; ".join(result['red_flags']), datetime.now().isoformat()))
         
         conn.commit()
         conn.close()
         
-        messagebox.showinfo("Analysis Complete", f"Email classified as: {classification}\nRisk Score: {risk_score}/100")
+        messagebox.showinfo("Analysis Complete", f"Classified as: {classification}\nRisk Score: {risk_score}/100")
     
     def clear_fields(self):
         """Clear all input fields"""
