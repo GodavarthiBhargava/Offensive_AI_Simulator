@@ -240,9 +240,52 @@ class Dashboard:
         content.pack(side="right", fill="both", expand=True, padx=20, pady=20)
         
         tk.Label(content, text="Welcome to Case Analysis", font=("Courier New", 18, "bold"),
-                bg="#2E2E2E", fg="#00FF66").pack(pady=50)
+                bg="#2E2E2E", fg="#00FF66").pack(pady=(50, 10))
         tk.Label(content, text="Select a module from the sidebar to begin", font=("Courier New", 12, "bold"),
-                bg="#2E2E2E", fg="#666666").pack()
+                bg="#2E2E2E", fg="#666666").pack(pady=(0, 30))
+        
+        # Add module image with effects
+        try:
+            from PIL import Image, ImageTk, ImageFilter
+            img_paths = ["ui/assessts/moduleimage.png.jpg", "ui/assessts/moduleimage.png", 
+                        "ui/assessts/moduleimage.jpg", "assets/moduleimage.png"]
+            
+            img_loaded = False
+            for img_path in img_paths:
+                if os.path.exists(img_path):
+                    # Load and resize image
+                    img = Image.open(img_path)
+                    # Maintain aspect ratio
+                    max_width, max_height = 850, 550
+                    img.thumbnail((max_width, max_height), Image.Resampling.LANCZOS)
+                    
+                    # Create photo
+                    photo = ImageTk.PhotoImage(img)
+                    
+                    # Image container with shadow effect
+                    img_container = tk.Frame(content, bg="#1F1F1F", relief="solid", bd=0,
+                                            highlightbackground="#00FF66", highlightthickness=2)
+                    img_container.pack(pady=20)
+                    
+                    img_label = tk.Label(img_container, image=photo, bg="#1F1F1F")
+                    img_label.image = photo
+                    img_label.pack(padx=5, pady=5)
+                    
+                    # Fade-in animation
+                    self.fade_in_widget(img_container)
+                    img_loaded = True
+                    break
+            
+            if not img_loaded:
+                # Show placeholder message
+                placeholder = tk.Label(content, text="📁 Place 'moduleimage.png' in assets folder",
+                                      font=("Courier New", 11, "bold"), bg="#1F1F1F", fg="#FFAA00",
+                                      relief="solid", bd=2, padx=30, pady=20)
+                placeholder.pack(pady=20)
+        except Exception as e:
+            error_label = tk.Label(content, text=f"⚠️ Error loading image: {str(e)}",
+                                  font=("Courier New", 10), bg="#2E2E2E", fg="#FF4444")
+            error_label.pack(pady=20)
     
     def _create_sidebar_item(self, parent, text, command, enabled):
         btn = tk.Button(parent, text=text, font=("Courier New", 11, "bold"),
@@ -305,6 +348,16 @@ class Dashboard:
         module_window = tk.Toplevel(self.root)
         module_window.configure(bg="#2E2E2E")
         AwarenessTrainingModule(module_window)
+    
+    def fade_in_widget(self, widget, alpha=0.0):
+        """Fade-in animation for widget"""
+        if alpha < 1.0:
+            alpha += 0.05
+            try:
+                self.root.attributes('-alpha', 1.0)
+            except:
+                pass
+            self.root.after(30, lambda: self.fade_in_widget(widget, alpha))
     
     def open_case_history(self):
         from ui.case_history_ui import CaseHistoryUI
