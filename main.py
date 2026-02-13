@@ -223,16 +223,17 @@ class Dashboard:
         
         modules = [
             ("Password Attack Simulator", self.open_password_module),
-            ("Phishing Simulator", None),
-            ("Social Engineering Lab", None),
-            ("Email Analyzer", None),
-            ("AI Intelligence Engine", None),
-            ("Risk & Reports", None),
-            ("Awareness Training", None)
+            ("AI Behavior Engine", self.open_ai_behavior),
+            ("Phishing Campaign Simulator", self.open_phishing_campaign),
+            ("Voice / Social Engineering", self.open_social_engineering),
+            ("Email & Message Analyzer", self.open_email_analyzer),
+            ("Domain Verification", self.open_domain_verification),
+            ("Risk & Analytics Dashboard", self.open_analytics),
+            ("Awareness Training", self.open_awareness_training)
         ]
         
         for name, cmd in modules:
-            self._create_sidebar_item(sidebar, name, cmd, cmd is not None)
+            self._create_sidebar_item(sidebar, name, cmd, True)
         
         # RIGHT: Content Area
         content = tk.Frame(main_container, bg="#2E2E2E")
@@ -262,6 +263,48 @@ class Dashboard:
         module_window = tk.Toplevel(self.root)
         module_window.configure(bg="#2E2E2E")
         PasswordAttackModule(module_window)
+    
+    def open_ai_behavior(self):
+        from ui.ai_behavior_ui import AIBehaviorModule
+        module_window = tk.Toplevel(self.root)
+        module_window.configure(bg="#2E2E2E")
+        AIBehaviorModule(module_window)
+    
+    def open_phishing_campaign(self):
+        from ui.phishing_campaign_ui import PhishingCampaignModule
+        module_window = tk.Toplevel(self.root)
+        module_window.configure(bg="#2E2E2E")
+        PhishingCampaignModule(module_window)
+    
+    def open_social_engineering(self):
+        from ui.social_engineering_ui import SocialEngineeringModule
+        module_window = tk.Toplevel(self.root)
+        module_window.configure(bg="#2E2E2E")
+        SocialEngineeringModule(module_window)
+    
+    def open_email_analyzer(self):
+        from ui.email_analyzer_ui import EmailAnalyzerModule
+        module_window = tk.Toplevel(self.root)
+        module_window.configure(bg="#2E2E2E")
+        EmailAnalyzerModule(module_window)
+    
+    def open_domain_verification(self):
+        from ui.domain_verification_ui import DomainVerificationModule
+        module_window = tk.Toplevel(self.root)
+        module_window.configure(bg="#2E2E2E")
+        DomainVerificationModule(module_window)
+    
+    def open_analytics(self):
+        from ui.analytics_ui import AnalyticsDashboard
+        module_window = tk.Toplevel(self.root)
+        module_window.configure(bg="#2E2E2E")
+        AnalyticsDashboard(module_window)
+    
+    def open_awareness_training(self):
+        from ui.awareness_training_ui import AwarenessTrainingModule
+        module_window = tk.Toplevel(self.root)
+        module_window.configure(bg="#2E2E2E")
+        AwarenessTrainingModule(module_window)
     
     def open_case_history(self):
         from ui.case_history_ui import CaseHistoryUI
