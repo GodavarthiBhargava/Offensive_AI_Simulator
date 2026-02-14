@@ -91,8 +91,8 @@ class DomainVerificationModule:
                     bg="#1F1F1F", fg="#00FF66", width=20, anchor="w").pack(side="left")
             
             label = tk.Label(frame, text="⏳ Pending", font=("Consolas", 10, "bold"),
-                           bg="#1F1F1F", fg="#666666")
-            label.pack(side="left")
+                           bg="#1F1F1F", fg="#666666", wraplength=400, justify="left")
+            label.pack(side="left", fill="x", expand=True)
             self.check_labels[check] = label
         
         # Right panel - Detailed results
@@ -198,7 +198,7 @@ class DomainVerificationModule:
                 self.results_text.insert(tk.END, f"Status: ✅ PASSED\n")
                 self.results_text.insert(tk.END, f"Certificate Info: {ssl_info}\n\n")
                 self.results_text.insert(tk.END, "👉 This website supports secure HTTPS communication.\n\n")
-                self.check_labels["SSL Certificate"].config(text="✅ Valid", fg="#00FF66")
+                self.check_labels["SSL Certificate"].config(text="✅ Valid (Secure HTTPS)", fg="#00FF66")
             else:
                 self.results_text.insert(tk.END, f"Status: ❌ FAILED\n")
                 self.results_text.insert(tk.END, f"Reason: No valid SSL certificate found\n")
@@ -206,7 +206,7 @@ class DomainVerificationModule:
                 self.results_text.insert(tk.END, "👉 This means the website does not support secure HTTPS communication.\n\n")
                 risk_score += 20
                 threats.append("No SSL certificate")
-                self.check_labels["SSL Certificate"].config(text="❌ Invalid", fg="#FF4444")
+                self.check_labels["SSL Certificate"].config(text="❌ No SSL (Insecure)", fg="#FF4444")
             
             # Check 2: DNS Resolution
             self.results_text.insert(tk.END, "🌐 2. DNS Resolution Check\n\n")
@@ -215,7 +215,6 @@ class DomainVerificationModule:
                 self.results_text.insert(tk.END, f"Status: ✅ PASSED\n")
                 self.results_text.insert(tk.END, f"Reason: Domain resolves to IP: {ip_address}\n\n")
                 self.results_text.insert(tk.END, "👉 Domain is properly registered and accessible.\n\n")
-                self.check_labels["DNS Resolution"].config(text="✅ Valid", fg="#00FF66")
                 
                 # Check if IP address in URL
                 if re.match(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', domain):
@@ -223,14 +222,16 @@ class DomainVerificationModule:
                     self.results_text.insert(tk.END, "👉 Legitimate websites rarely use IP addresses directly.\n\n")
                     risk_score += 30
                     threats.append("IP address in URL")
-                    self.check_labels["DNS Resolution"].config(text="⚠️ IP Address", fg="#FFAA00")
+                    self.check_labels["DNS Resolution"].config(text="⚠️ Direct IP (Suspicious)", fg="#FFAA00")
+                else:
+                    self.check_labels["DNS Resolution"].config(text=f"✅ Active ({ip_address})", fg="#00FF66")
             else:
                 self.results_text.insert(tk.END, f"Status: ❌ FAILED\n")
                 self.results_text.insert(tk.END, f"Reason: Domain does not resolve to a valid IP address\n\n")
                 self.results_text.insert(tk.END, "👉 This indicates the domain may be fake or not properly registered.\n\n")
                 risk_score += 40
                 threats.append("Domain not resolvable")
-                self.check_labels["DNS Resolution"].config(text="❌ Failed", fg="#FF4444")
+                self.check_labels["DNS Resolution"].config(text="❌ Not Resolvable (Fake)", fg="#FF4444")
             
             # Check 3: Domain Age
             self.results_text.insert(tk.END, "📅 3. Domain Age & Structure Analysis\n\n")
@@ -241,15 +242,18 @@ class DomainVerificationModule:
                 self.results_text.insert(tk.END, "👉 Suspicious patterns detected in domain structure.\n\n")
                 risk_score += age_risk
                 threats.append("Suspicious domain characteristics")
-                self.check_labels["Domain Age"].config(text="⚠️ Suspicious", fg="#FFAA00")
+                # Extract reason from age_info
+                reason = age_info.split('⚠️')[-1].strip() if '⚠️' in age_info else "Suspicious Pattern"
+                self.check_labels["Domain Age"].config(text=f"⚠️ {reason}", fg="#FFAA00")
             else:
                 self.results_text.insert(tk.END, f"Status: ✅ PASSED\n")
                 self.results_text.insert(tk.END, f"Observation: {age_info}\n\n")
                 if not dns_valid:
                     self.results_text.insert(tk.END, "👉 However, domain age could not be verified due to DNS failure.\n\n")
+                    self.check_labels["Domain Age"].config(text="⚠️ Cannot Verify", fg="#666666")
                 else:
                     self.results_text.insert(tk.END, "👉 Domain structure appears legitimate.\n\n")
-                self.check_labels["Domain Age"].config(text="✅ Normal", fg="#00FF66")
+                    self.check_labels["Domain Age"].config(text="✅ Normal Structure", fg="#00FF66")
             
             # Check 4: Spoof Detection
             self.results_text.insert(tk.END, "🎭 4. Spoof Detection (Similarity Check)\n\n")
@@ -260,12 +264,17 @@ class DomainVerificationModule:
                 self.results_text.insert(tk.END, "👉 This domain closely resembles a legitimate brand domain.\n\n")
                 risk_score += spoof_risk
                 threats.append("Possible domain spoofing")
-                self.check_labels["Spoof Detection"].config(text="⚠️ Detected", fg="#FF4444")
+                # Extract brand name from spoof_info
+                if "Similar to" in spoof_info:
+                    brand = spoof_info.split("'")[1] if "'" in spoof_info else "Brand"
+                    self.check_labels["Spoof Detection"].config(text=f"🚨 Impersonates {brand}", fg="#FF4444")
+                else:
+                    self.check_labels["Spoof Detection"].config(text="🚨 Spoofing Detected", fg="#FF4444")
             else:
                 self.results_text.insert(tk.END, f"Status: ✅ CLEAN\n")
                 self.results_text.insert(tk.END, f"Observation: {spoof_info}\n\n")
                 self.results_text.insert(tk.END, "👉 No direct impersonation detected.\n\n")
-                self.check_labels["Spoof Detection"].config(text="✅ Clean", fg="#00FF66")
+                self.check_labels["Spoof Detection"].config(text="✅ No Impersonation", fg="#00FF66")
             
             # Check 5: TLD Check
             self.results_text.insert(tk.END, "🌍 5. TLD (Top-Level Domain) Check\n\n")
@@ -278,12 +287,12 @@ class DomainVerificationModule:
                 self.results_text.insert(tk.END, "👉 This TLD is commonly used in phishing attacks.\n\n")
                 risk_score += tld_risk
                 threats.append("Suspicious TLD")
-                self.check_labels["TLD Check"].config(text="⚠️ Suspicious", fg="#FFAA00")
+                self.check_labels["TLD Check"].config(text=f"⚠️ High-Risk TLD ({tld})", fg="#FFAA00")
             else:
                 self.results_text.insert(tk.END, f"Status: ✅ NORMAL\n")
                 self.results_text.insert(tk.END, f"TLD: {tld}\n\n")
                 self.results_text.insert(tk.END, f"👉 {tld} is considered a standard and trusted domain extension.\n\n")
-                self.check_labels["TLD Check"].config(text="✅ Normal", fg="#00FF66")
+                self.check_labels["TLD Check"].config(text=f"✅ Trusted TLD ({tld})", fg="#00FF66")
             
             # Check 6: Homograph Attack
             self.results_text.insert(tk.END, "🔤 6. Homograph Attack Detection\n\n")
