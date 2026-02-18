@@ -27,6 +27,15 @@ This tool is designed exclusively for:
 
 ## 🎯 Features
 
+### 🔐 Two-Factor Authentication (2FA)
+- **Email-Based OTP**: Secure 6-digit one-time password verification
+- **Signup Protection**: Email verification required for new accounts
+- **Login Security**: OTP verification on every login attempt
+- **5-Minute Expiry**: Time-limited OTP codes for enhanced security
+- **Password Hashing**: SHA-256 encryption for stored passwords
+- **User Database**: Secure SQLite storage with verification tracking
+- **Resend Functionality**: Request new OTP if expired or not received
+
 ### ✅ Module 1: Password Attack Simulator
 - **Hashing Engine**: MD5 and SHA-256 password hashing
 - **Dictionary Attack**: Simulates dictionary-based password cracking
@@ -97,6 +106,7 @@ Offensive_AI_Simulator/
 │
 ├── ui/                              # User interface modules
 │   ├── main.py                      # Main application entry point
+│   ├── authentication_ui.py         # 2FA Login/Signup UI
 │   ├── module1_ui.py                # Password Attack Simulator UI
 │   ├── email_analyzer_ui.py         # Email/Message Analyzer UI
 │   ├── domain_verification_ui.py    # Domain Verification UI
@@ -111,6 +121,7 @@ Offensive_AI_Simulator/
 │       └── moduleimage.png.jpg      # Module display image
 │
 ├── backend/                         # Core logic modules
+│   ├── authentication.py            # 2FA authentication system
 │   ├── hashing.py                   # Password hashing (MD5, SHA256)
 │   ├── dictionary_attack.py         # Dictionary attack simulation
 │   ├── brute_force.py               # Brute force simulation
@@ -122,6 +133,7 @@ Offensive_AI_Simulator/
 │   └── session_store.py             # Session data storage
 │
 ├── cases/                           # Database storage (auto-created)
+│   ├── users.db                     # User accounts and authentication
 │   ├── attack_results.db            # Password attack results
 │   ├── email_analysis.db            # Email analysis records
 │   ├── domain_verification.db       # Domain check results
@@ -131,7 +143,11 @@ Offensive_AI_Simulator/
 │   └── wordlist.txt                 # Common password dictionary
 │
 ├── main.py                          # Application entry point
+├── email_config.py                  # Email SMTP configuration (user creates)
+├── email_config_template.py         # Email config template
+├── EMAIL_SETUP_GUIDE.md             # 2FA setup instructions
 ├── requirements.txt                 # Python dependencies
+├── .gitignore                       # Git ignore rules
 └── README.md                        # This file
 ```
 
@@ -157,9 +173,63 @@ cd Offensive_AI_Simulator
 pip install -r requirements.txt
 ```
 
-3. **Run the application:**
+3. **Configure Email for 2FA (Required):**
+```bash
+# Copy the email configuration template
+copy email_config_template.py email_config.py
+
+# Edit email_config.py with your Gmail credentials
+# See EMAIL_SETUP_GUIDE.md for detailed instructions
+```
+
+4. **Run the application:**
 ```bash
 python main.py
+```
+
+---
+
+## 🔐 Two-Factor Authentication Setup
+
+### Quick Setup Guide
+
+1. **Enable Gmail 2-Step Verification**
+   - Visit: https://myaccount.google.com/security
+   - Enable 2-Step Verification
+
+2. **Generate App Password**
+   - Visit: https://myaccount.google.com/apppasswords
+   - Select "Mail" and "Windows Computer"
+   - Copy the 16-character password
+
+3. **Configure email_config.py**
+   ```python
+   SENDER_EMAIL = "youremail@gmail.com"
+   APP_PASSWORD = "your16charpassword"  # No spaces
+   ```
+
+4. **Test Authentication**
+   - Run the application
+   - Sign up with your email
+   - Check email for OTP
+   - Enter OTP to verify
+
+📖 **For detailed setup instructions, see [EMAIL_SETUP_GUIDE.md](EMAIL_SETUP_GUIDE.md)**
+
+### Authentication Flow
+
+```
+Application Start → Splash Screen → Login/Signup Screen
+                                           ↓
+                                    Enter Credentials
+                                           ↓
+                                    OTP Sent to Email
+                                           ↓
+                                    Verify 6-Digit OTP
+                                           ↓
+                                    Access Granted ✅
+                                           ↓
+                                    Case Selection → Modules
 ```
 
 ---
@@ -370,6 +440,9 @@ pip install -r requirements.txt
 ## 📖 Learning Outcomes
 
 Students will understand:
+- ✅ Two-factor authentication implementation
+- ✅ Email-based OTP verification systems
+- ✅ Secure password storage with hashing
 - ✅ How password hashing works
 - ✅ Why weak passwords are dangerous
 - ✅ Dictionary vs brute force attacks
@@ -421,9 +494,11 @@ This is a college project. Contributions should maintain:
 
 ## 🐛 Known Issues
 
+- 2FA requires email configuration before first use
 - Domain verification requires internet connection for SSL/DNS checks
 - PDF export requires `reportlab` library installation
 - Some antivirus software may flag the executable (false positive)
+- Gmail App Password required (regular password won't work)
 
 ---
 

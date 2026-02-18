@@ -185,18 +185,31 @@ class Dashboard:
         tk.Label(center_frame, text="SECURENETRA - Digital Forensics Simulator",
                 font=("Courier New", 14, "bold"), bg="#1F1F1F", fg="#00FF66").pack()
         
-        # RIGHT: Case Name, History Button and Live Date
+        # RIGHT: Case Name, History Button, Logout Button and Live Date
         right_frame = tk.Frame(navbar, bg="#1F1F1F")
         right_frame.pack(side="right", padx=20, pady=15)
         
+        # Button container
+        btn_container = tk.Frame(right_frame, bg="#1F1F1F")
+        btn_container.pack(side="top", pady=(0, 5))
+        
         # History button
-        history_btn = tk.Button(right_frame, text="📁 HISTORY", font=("Courier New", 10, "bold"),
+        history_btn = tk.Button(btn_container, text="📁 HISTORY", font=("Courier New", 10, "bold"),
                                bg="#000000", fg="#00FF66", relief="solid", bd=1,
                                activebackground="#003300", cursor="hand2",
                                command=self.open_case_history, padx=10, pady=5)
-        history_btn.pack(side="top", pady=(0, 5))
+        history_btn.pack(side="left", padx=(0, 5))
         history_btn.bind("<Enter>", lambda e: history_btn.config(bg="#003300"))
         history_btn.bind("<Leave>", lambda e: history_btn.config(bg="#000000"))
+        
+        # Logout button
+        logout_btn = tk.Button(btn_container, text="🚪 LOGOUT", font=("Courier New", 10, "bold"),
+                              bg="#000000", fg="#FF4444", relief="solid", bd=1,
+                              activebackground="#330000", cursor="hand2",
+                              command=self.logout, padx=10, pady=5)
+        logout_btn.pack(side="left")
+        logout_btn.bind("<Enter>", lambda e: logout_btn.config(bg="#330000"))
+        logout_btn.bind("<Leave>", lambda e: logout_btn.config(bg="#000000"))
         
         tk.Label(right_frame, text=f"Case: {case_name}", font=("Courier New", 9, "bold"),
                 bg="#1F1F1F", fg="#00FF66").pack()
@@ -359,6 +372,29 @@ class Dashboard:
                 pass
             self.root.after(30, lambda: self.fade_in_widget(widget, alpha))
     
+    def logout(self):
+        """Logout and return to authentication screen"""
+        if messagebox.askyesno("Logout", "Are you sure you want to logout?"):
+            # Clear window
+            for widget in self.root.winfo_children():
+                widget.destroy()
+            
+            # Show authentication screen
+            from ui.authentication_ui import AuthenticationUI
+            
+            def on_auth_success(user_email):
+                # Clear authentication screen
+                for widget in self.root.winfo_children():
+                    widget.destroy()
+                
+                # Show welcome screen
+                def on_case_ready(case_name):
+                    Dashboard(self.root, case_name)
+                
+                WelcomeScreen(self.root, on_case_ready)
+            
+            AuthenticationUI(self.root, on_auth_success)
+    
     def open_case_history(self):
         from ui.case_history_ui import CaseHistoryUI
         history_window = tk.Toplevel(self.root)
@@ -448,17 +484,31 @@ class SplashScreen:
 def main():
     root = tk.Tk()
     
-    def on_case_ready(case_name):
-        Dashboard(root, case_name)
+    def on_auth_success(user_email):
+        """Called after successful authentication"""
+        # Clear authentication screen
+        for widget in root.winfo_children():
+            widget.destroy()
+        
+        # Show welcome screen
+        def on_case_ready(case_name):
+            Dashboard(root, case_name)
+        
+        WelcomeScreen(root, on_case_ready)
     
-    def show_welcome():
+    def show_authentication():
+        """Show authentication screen after splash"""
         # Clear splash screen
         for widget in root.winfo_children():
             widget.destroy()
         root.attributes("-alpha", 1.0)
-        WelcomeScreen(root, on_case_ready)
+        
+        # Show authentication UI
+        from ui.authentication_ui import AuthenticationUI
+        AuthenticationUI(root, on_auth_success)
     
-    SplashScreen(root, show_welcome)
+    # Start with splash screen
+    SplashScreen(root, show_authentication)
     root.mainloop()
 
 
