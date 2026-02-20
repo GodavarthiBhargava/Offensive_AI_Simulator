@@ -39,8 +39,22 @@ class VoiceAnalysisModule:
         upload_frame = tk.Frame(left_panel, bg="#1F1F1F")
         upload_frame.pack(fill="x", padx=20, pady=20)
         
-        tk.Label(upload_frame, text="Upload Audio File:", font=("Consolas", 11, "bold"),
+        tk.Label(upload_frame, text="Select Language:", font=("Consolas", 11, "bold"),
                 bg="#1F1F1F", fg="#00FF66").pack(anchor="w", pady=(0, 10))
+        
+        self.language_var = tk.StringVar(value="Telugu")
+        lang_frame = tk.Frame(upload_frame, bg="#1F1F1F")
+        lang_frame.pack(fill="x", pady=(0, 15))
+        
+        for lang in ["Telugu", "Hindi", "English"]:
+            rb = tk.Radiobutton(lang_frame, text=lang, variable=self.language_var, value=lang,
+                               font=("Consolas", 10, "bold"), bg="#1F1F1F", fg="#00FF66",
+                               selectcolor="#000000", activebackground="#1F1F1F",
+                               activeforeground="#00FF66")
+            rb.pack(side="left", padx=10)
+        
+        tk.Label(upload_frame, text="Upload Audio File:", font=("Consolas", 11, "bold"),
+                bg="#1F1F1F", fg="#00FF66").pack(anchor="w", pady=(10, 10))
         
         self.file_label = tk.Label(upload_frame, text="No file selected", font=("Consolas", 10, "bold"),
                                    bg="#000000", fg="#666666", anchor="w", padx=10, pady=10)
@@ -101,7 +115,7 @@ class VoiceAnalysisModule:
                 from faster_whisper import WhisperModel
                 from transformers import pipeline
                 
-                self.model = WhisperModel("base", device="cpu", compute_type="int8")
+                self.model = WhisperModel("medium", device="cpu", compute_type="int8")
                 self.classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
                 
                 self.models_loaded = True
@@ -152,7 +166,18 @@ class VoiceAnalysisModule:
             # Speech to text
             self.update_results("🎤 TRANSCRIBING AUDIO...\n\n")
             
-            segments, info = self.model.transcribe(self.file_path, beam_size=5)
+            # Get language code
+            lang_map = {"Telugu": "te", "Hindi": "hi", "English": "en"}
+            selected_lang = lang_map[self.language_var.get()]
+            
+            segments, info = self.model.transcribe(
+                self.file_path,
+                task="transcribe",
+                language=selected_lang,
+                beam_size=5,
+                vad_filter=True,
+                word_timestamps=False
+            )
             
             full_text = ""
             for segment in segments:
