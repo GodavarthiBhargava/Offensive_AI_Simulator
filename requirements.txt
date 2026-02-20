@@ -2,3 +2,6 @@ pyinstaller==6.3.0
 Pillow==10.1.0
 pyglet
 reportlab==4.0.7
+faster-whisper
+transformers
+torch

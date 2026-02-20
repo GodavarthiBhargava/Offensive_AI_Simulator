@@ -1,25 +1,25 @@
 import tkinter as tk
-from tkinter import ttk, messagebox, scrolledtext
-import sqlite3
+from tkinter import filedialog, messagebox, scrolledtext
 import os
-from datetime import datetime
-import random
+import threading
 
-class SocialEngineeringModule:
+class VoiceAnalysisModule:
     def __init__(self, window):
         self.window = window
-        self.window.title("Voice / Social Engineering Simulator")
-        self.window.geometry("1200x700")
+        self.window.title("Voice / Social Engineering Analyzer")
+        self.window.geometry("1400x800")
         self.window.configure(bg="#2E2E2E")
         
-        self.init_se_db()
+        self.model = None
+        self.classifier = None
+        self.models_loaded = False
         
         # Top bar
         navbar = tk.Frame(window, bg="#1F1F1F", height=50)
         navbar.pack(fill="x")
         navbar.pack_propagate(False)
         
-        tk.Label(navbar, text="📞 VOICE / SOCIAL ENGINEERING SIMULATOR",
+        tk.Label(navbar, text="🎤 VOICE / SOCIAL ENGINEERING ANALYZER",
                 font=("Consolas", 14, "bold"), bg="#1F1F1F", fg="#00FF66").pack(pady=15)
         
         tk.Frame(window, bg="#003300", height=1).pack(fill="x")
@@ -28,326 +28,260 @@ class SocialEngineeringModule:
         content = tk.Frame(window, bg="#2E2E2E")
         content.pack(fill="both", expand=True, padx=20, pady=20)
         
-        # Left panel - Scenario selection
+        # Left panel - Upload
         left_panel = tk.Frame(content, bg="#1F1F1F", relief="solid", bd=2)
         left_panel.pack(side="left", fill="both", expand=True, padx=(0, 10))
         
-        tk.Label(left_panel, text="🎭 SCENARIO SELECTION", font=("Consolas", 14, "bold"),
+        tk.Label(left_panel, text="🎙️ VOICE RECORDING ANALYSIS", font=("Consolas", 14, "bold"),
                 bg="#1F1F1F", fg="#00FF66").pack(pady=15)
         
-        # Scenario selection
-        scenarios_frame = tk.Frame(left_panel, bg="#1F1F1F")
-        scenarios_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        # Upload section
+        upload_frame = tk.Frame(left_panel, bg="#1F1F1F")
+        upload_frame.pack(fill="x", padx=20, pady=20)
         
-        self.scenarios = {
-            "IT Support Call": {
-                "description": "Pretend to be IT support requesting password reset",
-                "triggers": ["Authority", "Urgency", "Technical jargon"],
-                "difficulty": "Medium"
-            },
-            "CEO Fraud": {
-                "description": "Impersonate CEO requesting urgent wire transfer",
-                "triggers": ["Authority", "Urgency", "Fear"],
-                "difficulty": "Hard"
-            },
-            "Delivery Notice": {
-                "description": "Fake delivery company requesting personal info",
-                "triggers": ["Curiosity", "Expectation"],
-                "difficulty": "Easy"
-            },
-            "Bank Security": {
-                "description": "Fake bank security checking suspicious activity",
-                "triggers": ["Fear", "Urgency", "Authority"],
-                "difficulty": "Medium"
-            },
-            "Survey/Prize": {
-                "description": "Survey with prize offer to collect information",
-                "triggers": ["Greed", "Curiosity"],
-                "difficulty": "Easy"
-            }
-        }
+        tk.Label(upload_frame, text="Upload Audio File:", font=("Consolas", 11, "bold"),
+                bg="#1F1F1F", fg="#00FF66").pack(anchor="w", pady=(0, 10))
         
-        self.selected_scenario = tk.StringVar(value="IT Support Call")
+        self.file_label = tk.Label(upload_frame, text="No file selected", font=("Consolas", 10, "bold"),
+                                   bg="#000000", fg="#666666", anchor="w", padx=10, pady=10)
+        self.file_label.pack(fill="x", pady=(0, 10))
         
-        for scenario, details in self.scenarios.items():
-            rb = tk.Radiobutton(scenarios_frame, text=scenario,
-                               variable=self.selected_scenario, value=scenario,
-                               font=("Consolas", 11, "bold"), bg="#1F1F1F",
-                               fg="#00FF66", selectcolor="#000000",
-                               activebackground="#1F1F1F", activeforeground="#00FF66",
-                               command=self.update_scenario_details)
-            rb.pack(anchor="w", pady=5)
+        upload_btn = tk.Button(upload_frame, text="📁 BROWSE FILE",
+                              font=("Consolas", 12, "bold"), bg="#000000", fg="#00FF66",
+                              activebackground="#003300", relief="solid", bd=2,
+                              cursor="hand2", command=self.browse_file)
+        upload_btn.pack(fill="x", ipady=10)
         
-        # Scenario details
-        self.details_frame = tk.Frame(left_panel, bg="#000000", relief="solid", bd=1)
-        self.details_frame.pack(fill="x", padx=10, pady=10)
+        # Supported formats
+        formats_frame = tk.Frame(left_panel, bg="#000000", relief="solid", bd=1)
+        formats_frame.pack(fill="x", padx=20, pady=10)
         
-        self.details_text = tk.Text(self.details_frame, bg="#000000", fg="#00FF66",
-                                   font=("Consolas", 10, "bold"), height=8, wrap=tk.WORD,
-                                   relief="flat", padx=10, pady=10)
-        self.details_text.pack(fill="both", expand=True)
+        tk.Label(formats_frame, text="Supported Formats:", font=("Consolas", 9, "bold"),
+                bg="#000000", fg="#00FF66").pack(anchor="w", padx=10, pady=(10, 5))
+        tk.Label(formats_frame, text="• MP3, WAV, M4A, FLAC, OGG", font=("Consolas", 9, "bold"),
+                bg="#000000", fg="#FFFFFF").pack(anchor="w", padx=10)
+        tk.Label(formats_frame, text="• Supports 90+ languages", font=("Consolas", 9, "bold"),
+                bg="#000000", fg="#FFFFFF").pack(anchor="w", padx=10, pady=(0, 10))
         
-        # Generate script button
-        gen_btn = tk.Button(left_panel, text="🤖 GENERATE AI SCRIPT",
-                           font=("Consolas", 12, "bold"), bg="#000000", fg="#00FF66",
-                           activebackground="#003300", relief="solid", bd=2,
-                           cursor="hand2", command=self.generate_script)
-        gen_btn.pack(pady=10, ipady=10, ipadx=20)
+        # Analyze button
+        analyze_btn = tk.Button(left_panel, text="🔍 ANALYZE VOICE",
+                               font=("Consolas", 13, "bold"), bg="#00FF66", fg="#000000",
+                               activebackground="#00CC52", relief="solid", bd=2,
+                               cursor="hand2", command=self.analyze_voice)
+        analyze_btn.pack(fill="x", padx=20, pady=20, ipady=15)
         
-        # Right panel - Script display
+        # Status
+        self.status_label = tk.Label(left_panel, text="⏳ Ready to analyze", font=("Consolas", 10, "bold"),
+                                     bg="#1F1F1F", fg="#FFAA00")
+        self.status_label.pack(pady=10)
+        
+        # Right panel - Results
         right_panel = tk.Frame(content, bg="#1F1F1F", relief="solid", bd=2)
         right_panel.pack(side="right", fill="both", expand=True, padx=(10, 0))
         
-        tk.Label(right_panel, text="📜 CALL SCRIPT", font=("Consolas", 14, "bold"),
+        tk.Label(right_panel, text="📊 ANALYSIS RESULTS", font=("Consolas", 14, "bold"),
                 bg="#1F1F1F", fg="#00FF66").pack(pady=15)
         
-        self.script_text = scrolledtext.ScrolledText(right_panel, font=("Consolas", 11, "bold"),
-                                                    bg="#000000", fg="#00FF66",
-                                                    relief="flat", padx=15, pady=15, wrap=tk.WORD)
-        self.script_text.pack(fill="both", expand=True, padx=10, pady=(0, 10))
+        self.results_text = scrolledtext.ScrolledText(right_panel, font=("Consolas", 10, "bold"),
+                                                     bg="#000000", fg="#00FF66",
+                                                     relief="flat", padx=15, pady=15, wrap=tk.WORD)
+        self.results_text.pack(fill="both", expand=True, padx=10, pady=(0, 10))
         
-        # Awareness score
-        score_frame = tk.Frame(right_panel, bg="#1F1F1F")
-        score_frame.pack(fill="x", padx=10, pady=10)
+        self.file_path = None
         
-        tk.Label(score_frame, text="Awareness Score:", font=("Consolas", 11, "bold"),
-                bg="#1F1F1F", fg="#00FF66").pack(side="left", padx=5)
-        
-        self.score_label = tk.Label(score_frame, text="0/100", font=("Consolas", 14, "bold"),
-                                    bg="#1F1F1F", fg="#FF4444")
-        self.score_label.pack(side="left", padx=5)
-        
-        # Test button
-        test_btn = tk.Button(right_panel, text="🎯 RUN SIMULATION TEST",
-                            font=("Consolas", 11, "bold"), bg="#000000", fg="#00FF66",
-                            activebackground="#003300", relief="solid", bd=2,
-                            cursor="hand2", command=self.run_simulation)
-        test_btn.pack(pady=10, ipady=8, ipadx=20)
-        
-        self.update_scenario_details()
+        # Load models in background
+        self.load_models_async()
     
-    def init_se_db(self):
-        """Initialize social engineering database"""
-        os.makedirs("cases", exist_ok=True)
-        conn = sqlite3.connect("cases/social_engineering.db")
-        cursor = conn.cursor()
+    def load_models_async(self):
+        """Load AI models in background"""
+        def load():
+            try:
+                self.status_label.config(text="⏳ Loading AI models...", fg="#FFAA00")
+                
+                from faster_whisper import WhisperModel
+                from transformers import pipeline
+                
+                self.model = WhisperModel("base", device="cpu", compute_type="int8")
+                self.classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
+                
+                self.models_loaded = True
+                self.status_label.config(text="✅ Models loaded - Ready", fg="#00FF66")
+            except Exception as e:
+                self.status_label.config(text=f"❌ Error loading models", fg="#FF4444")
+                messagebox.showerror("Error", f"Failed to load AI models:\n{str(e)}\n\nInstall: pip install faster-whisper transformers torch")
         
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS simulations (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                scenario_type TEXT,
-                script_used TEXT,
-                user_response TEXT,
-                awareness_score INTEGER,
-                timestamp TEXT
-            )
-        """)
-        
-        conn.commit()
-        conn.close()
+        thread = threading.Thread(target=load, daemon=True)
+        thread.start()
     
-    def update_scenario_details(self):
-        """Update scenario details display"""
-        scenario = self.selected_scenario.get()
-        details = self.scenarios[scenario]
+    def browse_file(self):
+        """Browse and select audio file"""
+        file_path = filedialog.askopenfilename(
+            title="Select Audio File",
+            filetypes=[
+                ("Audio Files", "*.mp3 *.wav *.m4a *.flac *.ogg *.mpeg *.mp4"),
+                ("All Files", "*.*")
+            ]
+        )
         
-        self.details_text.delete(1.0, tk.END)
-        self.details_text.insert(tk.END, f"📋 SCENARIO: {scenario}\n\n")
-        self.details_text.insert(tk.END, f"Description:\n{details['description']}\n\n")
-        self.details_text.insert(tk.END, f"Psychological Triggers:\n")
-        for trigger in details['triggers']:
-            self.details_text.insert(tk.END, f"  • {trigger}\n")
-        self.details_text.insert(tk.END, f"\nDifficulty: {details['difficulty']}")
+        if file_path:
+            self.file_path = file_path
+            filename = os.path.basename(file_path)
+            self.file_label.config(text=f"✅ {filename}", fg="#00FF66")
     
-    def generate_script(self):
-        """Generate AI call script"""
-        scenario = self.selected_scenario.get()
+    def analyze_voice(self):
+        """Analyze voice recording"""
+        if not self.file_path:
+            messagebox.showerror("Error", "Please select an audio file first")
+            return
         
-        scripts = {
-            "IT Support Call": """
-🎭 CALL SCRIPT: IT Support
-
-[Opening]
-"Hello, this is John from IT Support. We've detected unusual activity on your account and need to verify your credentials immediately."
-
-[Building Trust]
-"I have your employee ID here as EMP-{random_number}. Can you confirm that's correct?"
-
-[Creating Urgency]
-"We need to reset your password right away to prevent unauthorized access. This is a critical security issue."
-
-[The Ask]
-"For verification purposes, can you provide your current password? I'll reset it immediately after."
-
-[Alternative]
-"Or you can click this secure link I'm sending to your email to reset it yourself."
-
-[Closing]
-"Thank you for your cooperation. Your account security is our priority."
-
-⚠️ RED FLAGS:
-- Real IT never asks for passwords
-- Urgency is a manipulation tactic
-- Verify caller through official channels
-""",
-            "CEO Fraud": """
-🎭 CALL SCRIPT: CEO Impersonation
-
-[Opening]
-"This is [CEO Name]'s office. I'm calling on behalf of the CEO regarding an urgent matter."
-
-[Authority]
-"The CEO is in a meeting with investors and needs you to process a wire transfer immediately."
-
-[Urgency + Fear]
-"This is time-sensitive and confidential. The CEO specifically requested you handle this personally."
-
-[The Ask]
-"I'm sending you the wire transfer details. Please process it within the hour and confirm once done."
-
-[Pressure]
-"The CEO emphasized this is critical for the deal. Any delay could cost the company millions."
-
-⚠️ RED FLAGS:
-- Unusual urgency for financial transactions
-- Bypassing normal approval processes
-- Pressure to act without verification
-- Always verify through official channels
-""",
-            "Delivery Notice": """
-🎭 CALL SCRIPT: Fake Delivery
-
-[Opening]
-"Hello, this is Sarah from Express Delivery. We have a package for you but need to verify some information."
-
-[Creating Interest]
-"The package is marked as high-value and requires signature confirmation."
-
-[The Ask]
-"Can you confirm your full name, address, and phone number for our records?"
-
-[Additional Info]
-"Also, there's a small delivery fee of $5.99. Can I have your card details to process that?"
-
-[Closing]
-"Great! Your package will be delivered within 2 hours. Have a nice day!"
-
-⚠️ RED FLAGS:
-- Legitimate companies don't call for basic info
-- Never give payment details over phone
-- Verify tracking number on official website
-""",
-            "Bank Security": """
-🎭 CALL SCRIPT: Fake Bank Security
-
-[Opening]
-"This is the Security Department from [Bank Name]. We've detected suspicious activity on your account."
-
-[Creating Fear]
-"There have been three unauthorized transactions totaling $2,500. We've temporarily frozen your account."
-
-[Building Trust]
-"For your protection, I need to verify your identity. Can you confirm the last 4 digits of your card?"
-
-[The Ask]
-"Now, to unlock your account, I'll need your full card number and the security code on the back."
-
-[Urgency]
-"We need to act fast before more charges go through. This is a critical security matter."
-
-⚠️ RED FLAGS:
-- Banks never ask for full card details
-- Don't provide info to incoming callers
-- Hang up and call bank's official number
-- Verify through official channels only
-""",
-            "Survey/Prize": """
-🎭 CALL SCRIPT: Survey with Prize
-
-[Opening]
-"Congratulations! You've been selected for our customer satisfaction survey with a chance to win $500!"
-
-[Creating Interest]
-"This will only take 2 minutes, and you'll be entered into our prize draw automatically."
-
-[The Ask]
-"First, can I have your full name, email, and phone number for the prize notification?"
-
-[More Info]
-"Great! Now, for verification, what's your date of birth and home address?"
-
-[The Hook]
-"To claim your prize if you win, we'll need your bank account details for direct deposit."
-
-⚠️ RED FLAGS:
-- Legitimate surveys don't ask for sensitive info
-- Prize offers are often scams
-- Never give financial details for "prizes"
-- If it sounds too good to be true, it is
-"""
-        }
+        if not self.models_loaded:
+            messagebox.showerror("Error", "AI models are still loading. Please wait...")
+            return
         
-        script = scripts.get(scenario, "Script not available")
-        self.script_text.delete(1.0, tk.END)
-        self.script_text.insert(tk.END, script)
+        self.status_label.config(text="⏳ Analyzing...", fg="#FFAA00")
+        self.results_text.delete(1.0, tk.END)
+        self.results_text.insert(tk.END, "Processing audio file...\n\n")
         
-        messagebox.showinfo("Script Generated", "AI-generated call script ready!\n\nReview the red flags to learn how to detect this attack.")
+        # Run analysis in thread
+        thread = threading.Thread(target=self.run_analysis, daemon=True)
+        thread.start()
     
-    def run_simulation(self):
-        """Run simulation test"""
-        scenario = self.selected_scenario.get()
-        
-        # Simulate user response
-        responses = [
-            "User provided password immediately",
-            "User asked to verify caller identity",
-            "User hung up and called official number",
-            "User requested to handle through official channels",
-            "User fell for the social engineering attack"
-        ]
-        
-        response = random.choice(responses)
-        
-        # Calculate awareness score
-        if "verify" in response or "official" in response or "hung up" in response:
-            score = random.randint(70, 100)
-            color = "#00FF66"
-        elif "asked" in response:
-            score = random.randint(50, 70)
-            color = "#FFAA00"
-        else:
-            score = random.randint(0, 50)
-            color = "#FF4444"
-        
-        self.score_label.config(text=f"{score}/100", fg=color)
-        
-        # Save to database
-        conn = sqlite3.connect("cases/social_engineering.db")
-        cursor = conn.cursor()
-        
-        cursor.execute("""
-            INSERT INTO simulations (scenario_type, script_used, user_response, awareness_score, timestamp)
-            VALUES (?, ?, ?, ?, ?)
-        """, (scenario, "AI Generated", response, score, datetime.now().isoformat()))
-        
-        conn.commit()
-        conn.close()
-        
-        # Show result
-        if score >= 70:
-            result_msg = f"✅ EXCELLENT! (Score: {score}/100)\n\nYou demonstrated good security awareness!"
-        elif score >= 50:
-            result_msg = f"⚠️ MODERATE (Score: {score}/100)\n\nYou showed some caution but could improve."
-        else:
-            result_msg = f"❌ VULNERABLE (Score: {score}/100)\n\nYou fell for the social engineering attack!"
-        
-        result_msg += f"\n\nSimulated Response:\n{response}\n\n"
-        result_msg += "💡 Always verify caller identity through official channels!"
-        
-        messagebox.showinfo("Simulation Result", result_msg)
+    def run_analysis(self):
+        """Run speech-to-text and risk analysis"""
+        try:
+            # Speech to text
+            self.update_results("🎤 TRANSCRIBING AUDIO...\n\n")
+            
+            segments, info = self.model.transcribe(self.file_path, beam_size=5)
+            
+            full_text = ""
+            for segment in segments:
+                full_text += segment.text + " "
+            
+            full_text = full_text.strip()
+            detected_language = info.language
+            
+            if not full_text:
+                self.update_results("❌ No speech detected in audio file")
+                self.status_label.config(text="❌ Analysis failed", fg="#FF4444")
+                return
+            
+            # Display transcription
+            self.update_results(f"🌍 DETECTED LANGUAGE: {detected_language.upper()}\n\n")
+            self.update_results("📝 TRANSCRIPTION:\n")
+            self.update_results("─" * 70 + "\n")
+            self.update_results(f"{full_text}\n")
+            self.update_results("─" * 70 + "\n\n")
+            
+            # Risk analysis
+            self.update_results("🔍 ANALYZING RISK...\n\n")
+            
+            labels = [
+                "phishing attempt",
+                "social engineering",
+                "financial fraud",
+                "scam call",
+                "identity theft",
+                "normal conversation"
+            ]
+            
+            result = self.classifier(full_text, labels, multi_label=False)
+            
+            # Calculate risk score
+            risk_keywords = ["phishing", "social engineering", "fraud", "scam", "theft"]
+            risk_score = 0
+            
+            for label, score in zip(result["labels"], result["scores"]):
+                if any(keyword in label.lower() for keyword in risk_keywords):
+                    risk_score += score * 100
+            
+            risk_score = min(100, int(risk_score))
+            
+            if risk_score >= 70:
+                risk_level = "HIGH RISK"
+                risk_color = "🔴"
+            elif risk_score >= 40:
+                risk_level = "MEDIUM RISK"
+                risk_color = "🟡"
+            else:
+                risk_level = "LOW RISK"
+                risk_color = "🟢"
+            
+            # Display risk score
+            self.update_results(f"⚠️ RISK ASSESSMENT:\n\n")
+            self.update_results(f"{risk_color} Risk Level: {risk_level}\n")
+            self.update_results(f"📊 Risk Score: {risk_score}/100\n\n")
+            
+            # Top classifications
+            self.update_results("🎯 CLASSIFICATION RESULTS:\n\n")
+            for i, (label, score) in enumerate(zip(result["labels"][:3], result["scores"][:3]), 1):
+                percentage = int(score * 100)
+                self.update_results(f"{i}. {label.upper()}: {percentage}%\n")
+            
+            # Identify trap keywords
+            self.update_results("\n🚨 IDENTIFIED TRAP KEYWORDS:\n\n")
+            
+            trap_keywords = {
+                "urgent": "Creates false urgency",
+                "verify": "Verification scam",
+                "account": "Account compromise attempt",
+                "suspended": "Fear tactic",
+                "confirm": "Information phishing",
+                "password": "Credential theft",
+                "bank": "Financial fraud",
+                "credit card": "Payment scam",
+                "prize": "Prize scam",
+                "winner": "Lottery scam",
+                "tax": "Tax fraud",
+                "refund": "Refund scam",
+                "click": "Phishing link",
+                "download": "Malware distribution",
+                "social security": "Identity theft"
+            }
+            
+            found_keywords = []
+            text_lower = full_text.lower()
+            
+            for keyword, description in trap_keywords.items():
+                if keyword in text_lower:
+                    found_keywords.append((keyword, description))
+            
+            if found_keywords:
+                for keyword, description in found_keywords:
+                    self.update_results(f"• '{keyword.upper()}' - {description}\n")
+            else:
+                self.update_results("✅ No common trap keywords detected\n")
+            
+            # Recommendations
+            self.update_results("\n💡 RECOMMENDATIONS:\n\n")
+            
+            if risk_score >= 70:
+                self.update_results("❌ DO NOT RESPOND to this call\n")
+                self.update_results("❌ DO NOT share any personal information\n")
+                self.update_results("✅ Report this as a scam attempt\n")
+                self.update_results("✅ Block the caller immediately\n")
+            elif risk_score >= 40:
+                self.update_results("⚠️ Exercise extreme caution\n")
+                self.update_results("⚠️ Verify caller identity independently\n")
+                self.update_results("⚠️ Do not share sensitive information\n")
+            else:
+                self.update_results("✅ Call appears legitimate\n")
+                self.update_results("✅ Standard precautions apply\n")
+            
+            self.status_label.config(text="✅ Analysis complete", fg="#00FF66")
+            
+        except Exception as e:
+            self.update_results(f"\n❌ ERROR: {str(e)}\n")
+            self.status_label.config(text="❌ Analysis failed", fg="#FF4444")
+    
+    def update_results(self, text):
+        """Update results text widget"""
+        self.results_text.insert(tk.END, text)
+        self.results_text.see(tk.END)
+        self.window.update()
 
 
 if __name__ == "__main__":
     root = tk.Tk()
-    SocialEngineeringModule(root)
+    VoiceAnalysisModule(root)
     root.mainloop()

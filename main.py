@@ -333,10 +333,10 @@ class Dashboard:
         PhishingCampaignModule(module_window)
     
     def open_social_engineering(self):
-        from ui.social_engineering_ui import SocialEngineeringModule
+        from ui.social_engineering_ui import VoiceAnalysisModule
         module_window = tk.Toplevel(self.root)
         module_window.configure(bg="#2E2E2E")
-        SocialEngineeringModule(module_window)
+        VoiceAnalysisModule(module_window)
     
     def open_email_analyzer(self):
         from ui.email_analyzer_ui import EmailAnalyzerModule

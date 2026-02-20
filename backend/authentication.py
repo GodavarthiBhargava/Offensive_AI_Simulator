@@ -57,19 +57,34 @@ class AuthenticationSystem:
             
             msg = EmailMessage()
             msg.set_content(f"""
-🔐 SECURENETRA - Offensive AI Simulator
+SECURENETRA
+Offensive AI Security Simulator
 
-Your OTP for authentication is: {otp}
+🔐 TWO-FACTOR AUTHENTICATION
 
-This OTP is valid for 5 minutes.
+Hello,
 
-If you didn't request this, please ignore this email.
+You have requested access to SECURENETRA. To complete your authentication, please use the following One-Time Password (OTP):
 
----
-This is an automated email. Please do not reply.
+YOUR OTP CODE: {otp}
+
+⏱️ VALIDITY: This code is valid for 5 minutes only.
+
+⚠️ SECURITY NOTICE:
+• Do not share this code with anyone.
+• SECURENETRA will never ask for your OTP via phone or email.
+• If you did not request this code, please ignore this email.
+
+🛡️ Need Help?
+This is an automated security email from SECURENETRA.
+For support, contact your system administrator.
+
+© 2024 SECURENETRA
+Digital Forensics Simulator
+Educational Cybersecurity Training Platform
             """)
-            msg["Subject"] = "🔐 SECURENETRA - Your OTP Code"
-            msg["From"] = SENDER_EMAIL
+            msg["Subject"] = "🔐 SECURENETRA - Your Security Access Code"
+            msg["From"] = f"SECURENETRA <{SENDER_EMAIL}>"
             msg["To"] = receiver_email
             
             with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:

@@ -2,8 +2,42 @@ import tkinter as tk
 from tkinter import messagebox
 import sys
 import os
+import random
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from backend.authentication import AuthenticationSystem
+
+class MatrixRain:
+    """Matrix rain effect background"""
+    def __init__(self, canvas):
+        self.canvas = canvas
+        self.drops = []
+        self.chars = "01"
+        self.create_drops()
+        self.animate()
+    
+    def create_drops(self):
+        width = self.canvas.winfo_width()
+        for x in range(0, width, 20):
+            self.drops.append({
+                'x': x,
+                'y': random.randint(-500, 0),
+                'speed': random.randint(2, 5)
+            })
+    
+    def animate(self):
+        self.canvas.delete("matrix")
+        for drop in self.drops:
+            char = random.choice(self.chars)
+            self.canvas.create_text(
+                drop['x'], drop['y'],
+                text=char, fill="#00FF88", font=("Courier", 12),
+                tags="matrix"
+            )
+            drop['y'] += drop['speed']
+            if drop['y'] > self.canvas.winfo_height():
+                drop['y'] = random.randint(-100, 0)
+        
+        self.canvas.after(50, self.animate)
 
 class AuthenticationUI:
     def __init__(self, root, on_success_callback):
@@ -15,8 +49,8 @@ class AuthenticationUI:
         self.is_signup = False
         
         self.root.title("SECURENETRA - Authentication")
-        self.root.geometry("600x700")
-        self.root.configure(bg="#1F1F1F")
+        self.root.geometry("800x600")
+        self.root.configure(bg="#000000")
         
         self.show_login_screen()
     
@@ -29,127 +63,146 @@ class AuthenticationUI:
         """Display login screen"""
         self.clear_screen()
         
-        # Header
-        header = tk.Frame(self.root, bg="#000000", height=80)
-        header.pack(fill="x")
-        header.pack_propagate(False)
+        # Full screen black background with matrix effect
+        bg_canvas = tk.Canvas(self.root, bg="#000000", highlightthickness=0)
+        bg_canvas.pack(fill="both", expand=True)
         
-        tk.Label(header, text="🔐 SECURENETRA", font=("Consolas", 20, "bold"),
-                bg="#000000", fg="#00FF66").pack(pady=25)
+        # Matrix rain effect
+        self.root.update()
+        MatrixRain(bg_canvas)
         
-        # Main content
-        content = tk.Frame(self.root, bg="#1F1F1F")
-        content.pack(expand=True, fill="both", padx=50, pady=30)
+        # Center container
+        center_frame = tk.Frame(bg_canvas, bg="#000000")
+        center_frame.place(relx=0.5, rely=0.5, anchor="center")
         
-        tk.Label(content, text="LOGIN", font=("Consolas", 18, "bold"),
-                bg="#1F1F1F", fg="#00FF66").pack(pady=(0, 30))
+        # Glowing login box
+        login_box = tk.Frame(center_frame, bg="#0a0a0a", relief="solid", bd=0,
+                            highlightbackground="#00FF88", highlightthickness=3)
+        login_box.pack(padx=40, pady=40)
+        
+        # Inner padding
+        inner = tk.Frame(login_box, bg="#0a0a0a")
+        inner.pack(padx=40, pady=40)
+        
+        # Title
+        title = tk.Label(inner, text="⚡ HACKER LOGIN", font=("Courier New", 24, "bold"),
+                        bg="#0a0a0a", fg="#00FF88")
+        title.pack(pady=(0, 30))
         
         # Email
-        tk.Label(content, text="Email Address:", font=("Consolas", 11, "bold"),
-                bg="#1F1F1F", fg="#00FF66").pack(anchor="w", pady=(10, 5))
+        tk.Label(inner, text="EMAIL", font=("Courier New", 9, "bold"),
+                bg="#0a0a0a", fg="#00FF88").pack(anchor="w", pady=(10, 5))
         
-        self.login_email = tk.Entry(content, font=("Consolas", 12, "bold"),
-                                    bg="#000000", fg="#00FF66", relief="solid", bd=2)
-        self.login_email.pack(fill="x", ipady=10)
+        self.login_email = tk.Entry(inner, font=("Courier New", 12, "bold"),
+                                    bg="#000000", fg="#00FF88", relief="solid", bd=2,
+                                    insertbackground="#00FF88", highlightbackground="#00FF88",
+                                    highlightcolor="#00FF88", highlightthickness=1, width=30)
+        self.login_email.pack(ipady=10)
         
         # Password
-        tk.Label(content, text="Password:", font=("Consolas", 11, "bold"),
-                bg="#1F1F1F", fg="#00FF66").pack(anchor="w", pady=(20, 5))
+        tk.Label(inner, text="PASSWORD", font=("Courier New", 9, "bold"),
+                bg="#0a0a0a", fg="#00FF88").pack(anchor="w", pady=(20, 5))
         
-        self.login_password = tk.Entry(content, font=("Consolas", 12, "bold"),
-                                       bg="#000000", fg="#00FF66", relief="solid", bd=2, show="*")
-        self.login_password.pack(fill="x", ipady=10)
+        self.login_password = tk.Entry(inner, font=("Courier New", 12, "bold"),
+                                       bg="#000000", fg="#00FF88", relief="solid", bd=2, show="•",
+                                       insertbackground="#00FF88", highlightbackground="#00FF88",
+                                       highlightcolor="#00FF88", highlightthickness=1, width=30)
+        self.login_password.pack(ipady=10)
         
         # Login button
-        login_btn = tk.Button(content, text="🔓 LOGIN WITH OTP",
-                             font=("Consolas", 13, "bold"), bg="#00FF66", fg="#000000",
-                             activebackground="#00CC52", relief="solid", bd=0,
-                             cursor="hand2", command=self.handle_login)
-        login_btn.pack(fill="x", ipady=15, pady=(30, 10))
+        login_btn = tk.Button(inner, text="▶ ACCESS SYSTEM",
+                             font=("Courier New", 13, "bold"), bg="#00FF88", fg="#000000",
+                             activebackground="#00CC66", relief="flat", bd=0,
+                             cursor="hand2", command=self.handle_login, width=28, height=2)
+        login_btn.pack(pady=(30, 20))
         
-        # Divider
-        tk.Frame(content, bg="#00FF66", height=1).pack(fill="x", pady=20)
+        login_btn.bind("<Enter>", lambda e: login_btn.config(bg="#00CC66"))
+        login_btn.bind("<Leave>", lambda e: login_btn.config(bg="#00FF88"))
         
         # Signup link
-        signup_frame = tk.Frame(content, bg="#1F1F1F")
-        signup_frame.pack()
+        link_frame = tk.Frame(inner, bg="#0a0a0a")
+        link_frame.pack()
         
-        tk.Label(signup_frame, text="Don't have an account?", font=("Consolas", 10, "bold"),
-                bg="#1F1F1F", fg="#FFFFFF").pack(side="left", padx=(0, 5))
+        tk.Label(link_frame, text="New User?", font=("Courier New", 9, "bold"),
+                bg="#0a0a0a", fg="#666666").pack(side="left", padx=(0, 5))
         
-        signup_link = tk.Label(signup_frame, text="Sign Up", font=("Consolas", 10, "bold", "underline"),
-                              bg="#1F1F1F", fg="#00FF66", cursor="hand2")
+        signup_link = tk.Label(link_frame, text="Register", font=("Courier New", 9, "bold", "underline"),
+                              bg="#0a0a0a", fg="#00FF88", cursor="hand2")
         signup_link.pack(side="left")
         signup_link.bind("<Button-1>", lambda e: self.show_signup_screen())
         
-        # Info
-        tk.Label(content, text="🔐 Two-Factor Authentication Enabled",
-                font=("Consolas", 9, "bold"), bg="#1F1F1F", fg="#666666").pack(pady=(30, 5))
-        tk.Label(content, text="OTP will be sent to your email",
-                font=("Consolas", 9, "bold"), bg="#1F1F1F", fg="#666666").pack()
+        # Footer
+        tk.Label(inner, text="🔒 2FA ENABLED", font=("Courier New", 8, "bold"),
+                bg="#0a0a0a", fg="#004400").pack(pady=(20, 0))
     
     def show_signup_screen(self):
         """Display signup screen"""
         self.clear_screen()
         
-        # Header
-        header = tk.Frame(self.root, bg="#000000", height=80)
-        header.pack(fill="x")
-        header.pack_propagate(False)
+        bg_canvas = tk.Canvas(self.root, bg="#000000", highlightthickness=0)
+        bg_canvas.pack(fill="both", expand=True)
         
-        tk.Label(header, text="🔐 SECURENETRA", font=("Consolas", 20, "bold"),
-                bg="#000000", fg="#00FF66").pack(pady=25)
+        self.root.update()
+        MatrixRain(bg_canvas)
         
-        # Main content
-        content = tk.Frame(self.root, bg="#1F1F1F")
-        content.pack(expand=True, fill="both", padx=50, pady=30)
+        center_frame = tk.Frame(bg_canvas, bg="#000000")
+        center_frame.place(relx=0.5, rely=0.5, anchor="center")
         
-        tk.Label(content, text="CREATE ACCOUNT", font=("Consolas", 18, "bold"),
-                bg="#1F1F1F", fg="#00FF66").pack(pady=(0, 30))
+        signup_box = tk.Frame(center_frame, bg="#0a0a0a", relief="solid", bd=0,
+                             highlightbackground="#00FF88", highlightthickness=3)
+        signup_box.pack(padx=40, pady=40)
         
-        # Email
-        tk.Label(content, text="Email Address:", font=("Consolas", 11, "bold"),
-                bg="#1F1F1F", fg="#00FF66").pack(anchor="w", pady=(10, 5))
+        inner = tk.Frame(signup_box, bg="#0a0a0a")
+        inner.pack(padx=40, pady=40)
         
-        self.signup_email = tk.Entry(content, font=("Consolas", 12, "bold"),
-                                     bg="#000000", fg="#00FF66", relief="solid", bd=2)
-        self.signup_email.pack(fill="x", ipady=10)
+        title = tk.Label(inner, text="⚡ REGISTER", font=("Courier New", 24, "bold"),
+                        bg="#0a0a0a", fg="#00FF88")
+        title.pack(pady=(0, 30))
         
-        # Password
-        tk.Label(content, text="Password:", font=("Consolas", 11, "bold"),
-                bg="#1F1F1F", fg="#00FF66").pack(anchor="w", pady=(20, 5))
+        tk.Label(inner, text="EMAIL", font=("Courier New", 9, "bold"),
+                bg="#0a0a0a", fg="#00FF88").pack(anchor="w", pady=(10, 5))
         
-        self.signup_password = tk.Entry(content, font=("Consolas", 12, "bold"),
-                                        bg="#000000", fg="#00FF66", relief="solid", bd=2, show="*")
-        self.signup_password.pack(fill="x", ipady=10)
+        self.signup_email = tk.Entry(inner, font=("Courier New", 12, "bold"),
+                                     bg="#000000", fg="#00FF88", relief="solid", bd=2,
+                                     insertbackground="#00FF88", highlightbackground="#00FF88",
+                                     highlightcolor="#00FF88", highlightthickness=1, width=30)
+        self.signup_email.pack(ipady=10)
         
-        # Confirm Password
-        tk.Label(content, text="Confirm Password:", font=("Consolas", 11, "bold"),
-                bg="#1F1F1F", fg="#00FF66").pack(anchor="w", pady=(20, 5))
+        tk.Label(inner, text="PASSWORD", font=("Courier New", 9, "bold"),
+                bg="#0a0a0a", fg="#00FF88").pack(anchor="w", pady=(20, 5))
         
-        self.signup_confirm = tk.Entry(content, font=("Consolas", 12, "bold"),
-                                       bg="#000000", fg="#00FF66", relief="solid", bd=2, show="*")
-        self.signup_confirm.pack(fill="x", ipady=10)
+        self.signup_password = tk.Entry(inner, font=("Courier New", 12, "bold"),
+                                        bg="#000000", fg="#00FF88", relief="solid", bd=2, show="•",
+                                        insertbackground="#00FF88", highlightbackground="#00FF88",
+                                        highlightcolor="#00FF88", highlightthickness=1, width=30)
+        self.signup_password.pack(ipady=10)
         
-        # Signup button
-        signup_btn = tk.Button(content, text="📧 SIGN UP WITH OTP",
-                              font=("Consolas", 13, "bold"), bg="#00FF66", fg="#000000",
-                              activebackground="#00CC52", relief="solid", bd=0,
-                              cursor="hand2", command=self.handle_signup)
-        signup_btn.pack(fill="x", ipady=15, pady=(30, 10))
+        tk.Label(inner, text="CONFIRM PASSWORD", font=("Courier New", 9, "bold"),
+                bg="#0a0a0a", fg="#00FF88").pack(anchor="w", pady=(20, 5))
         
-        # Divider
-        tk.Frame(content, bg="#00FF66", height=1).pack(fill="x", pady=20)
+        self.signup_confirm = tk.Entry(inner, font=("Courier New", 12, "bold"),
+                                       bg="#000000", fg="#00FF88", relief="solid", bd=2, show="•",
+                                       insertbackground="#00FF88", highlightbackground="#00FF88",
+                                       highlightcolor="#00FF88", highlightthickness=1, width=30)
+        self.signup_confirm.pack(ipady=10)
         
-        # Login link
-        login_frame = tk.Frame(content, bg="#1F1F1F")
-        login_frame.pack()
+        signup_btn = tk.Button(inner, text="▶ CREATE ACCOUNT",
+                              font=("Courier New", 13, "bold"), bg="#00FF88", fg="#000000",
+                              activebackground="#00CC66", relief="flat", bd=0,
+                              cursor="hand2", command=self.handle_signup, width=28, height=2)
+        signup_btn.pack(pady=(30, 20))
         
-        tk.Label(login_frame, text="Already have an account?", font=("Consolas", 10, "bold"),
-                bg="#1F1F1F", fg="#FFFFFF").pack(side="left", padx=(0, 5))
+        signup_btn.bind("<Enter>", lambda e: signup_btn.config(bg="#00CC66"))
+        signup_btn.bind("<Leave>", lambda e: signup_btn.config(bg="#00FF88"))
         
-        login_link = tk.Label(login_frame, text="Login", font=("Consolas", 10, "bold", "underline"),
-                             bg="#1F1F1F", fg="#00FF66", cursor="hand2")
+        link_frame = tk.Frame(inner, bg="#0a0a0a")
+        link_frame.pack()
+        
+        tk.Label(link_frame, text="Already registered?", font=("Courier New", 9, "bold"),
+                bg="#0a0a0a", fg="#666666").pack(side="left", padx=(0, 5))
+        
+        login_link = tk.Label(link_frame, text="Login", font=("Courier New", 9, "bold", "underline"),
+                             bg="#0a0a0a", fg="#00FF88", cursor="hand2")
         login_link.pack(side="left")
         login_link.bind("<Button-1>", lambda e: self.show_login_screen())
     
@@ -157,62 +210,67 @@ class AuthenticationUI:
         """Display OTP verification screen"""
         self.clear_screen()
         
-        # Header
-        header = tk.Frame(self.root, bg="#000000", height=80)
-        header.pack(fill="x")
-        header.pack_propagate(False)
+        bg_canvas = tk.Canvas(self.root, bg="#000000", highlightthickness=0)
+        bg_canvas.pack(fill="both", expand=True)
         
-        tk.Label(header, text="🔐 SECURENETRA", font=("Consolas", 20, "bold"),
-                bg="#000000", fg="#00FF66").pack(pady=25)
+        self.root.update()
+        MatrixRain(bg_canvas)
         
-        # Main content
-        content = tk.Frame(self.root, bg="#1F1F1F")
-        content.pack(expand=True, fill="both", padx=50, pady=30)
+        center_frame = tk.Frame(bg_canvas, bg="#000000")
+        center_frame.place(relx=0.5, rely=0.5, anchor="center")
         
-        tk.Label(content, text="VERIFY OTP", font=("Consolas", 18, "bold"),
-                bg="#1F1F1F", fg="#00FF66").pack(pady=(0, 20))
+        otp_box = tk.Frame(center_frame, bg="#0a0a0a", relief="solid", bd=0,
+                          highlightbackground="#00FF88", highlightthickness=3)
+        otp_box.pack(padx=40, pady=40)
         
-        # Info
-        tk.Label(content, text=f"📧 OTP sent to:", font=("Consolas", 10, "bold"),
-                bg="#1F1F1F", fg="#FFFFFF").pack(pady=(10, 5))
-        tk.Label(content, text=self.current_email, font=("Consolas", 11, "bold"),
-                bg="#1F1F1F", fg="#00FF66").pack(pady=(0, 20))
+        inner = tk.Frame(otp_box, bg="#0a0a0a")
+        inner.pack(padx=40, pady=40)
         
-        tk.Label(content, text="⏱️ Valid for 5 minutes", font=("Consolas", 9, "bold"),
-                bg="#1F1F1F", fg="#FFAA00").pack(pady=(0, 30))
+        title = tk.Label(inner, text="⚡ VERIFY OTP", font=("Courier New", 24, "bold"),
+                        bg="#0a0a0a", fg="#00FF88")
+        title.pack(pady=(0, 20))
         
-        # OTP Entry
-        tk.Label(content, text="Enter 6-Digit OTP:", font=("Consolas", 11, "bold"),
-                bg="#1F1F1F", fg="#00FF66").pack(anchor="w", pady=(10, 5))
+        tk.Label(inner, text=f"📧 Code sent to:", font=("Courier New", 9, "bold"),
+                bg="#0a0a0a", fg="#666666").pack(pady=(10, 5))
+        tk.Label(inner, text=self.current_email, font=("Courier New", 10, "bold"),
+                bg="#0a0a0a", fg="#00FF88").pack(pady=(0, 10))
         
-        self.otp_entry = tk.Entry(content, font=("Consolas", 20, "bold"),
-                                  bg="#000000", fg="#00FF66", relief="solid", bd=2,
-                                  justify="center")
-        self.otp_entry.pack(fill="x", ipady=15)
+        tk.Label(inner, text="⏱️ Valid for 5 minutes", font=("Courier New", 8, "bold"),
+                bg="#0a0a0a", fg="#FFAA00").pack(pady=(0, 30))
         
-        # Verify button
-        verify_btn = tk.Button(content, text="✅ VERIFY OTP",
-                              font=("Consolas", 13, "bold"), bg="#00FF66", fg="#000000",
-                              activebackground="#00CC52", relief="solid", bd=0,
-                              cursor="hand2", command=self.handle_otp_verification)
-        verify_btn.pack(fill="x", ipady=15, pady=(30, 10))
+        tk.Label(inner, text="ENTER 6-DIGIT CODE", font=("Courier New", 9, "bold"),
+                bg="#0a0a0a", fg="#00FF88").pack(anchor="w", pady=(10, 5))
         
-        # Resend OTP
-        resend_frame = tk.Frame(content, bg="#1F1F1F")
-        resend_frame.pack(pady=20)
+        self.otp_entry = tk.Entry(inner, font=("Courier New", 20, "bold"),
+                                  bg="#000000", fg="#00FF88", relief="solid", bd=2,
+                                  justify="center", insertbackground="#00FF88",
+                                  highlightbackground="#00FF88", highlightcolor="#00FF88",
+                                  highlightthickness=1, width=15)
+        self.otp_entry.pack(ipady=15)
         
-        tk.Label(resend_frame, text="Didn't receive OTP?", font=("Consolas", 10, "bold"),
-                bg="#1F1F1F", fg="#FFFFFF").pack(side="left", padx=(0, 5))
+        verify_btn = tk.Button(inner, text="▶ VERIFY",
+                              font=("Courier New", 13, "bold"), bg="#00FF88", fg="#000000",
+                              activebackground="#00CC66", relief="flat", bd=0,
+                              cursor="hand2", command=self.handle_otp_verification,
+                              width=28, height=2)
+        verify_btn.pack(pady=(30, 20))
         
-        resend_link = tk.Label(resend_frame, text="Resend", font=("Consolas", 10, "bold", "underline"),
-                              bg="#1F1F1F", fg="#00FF66", cursor="hand2")
+        verify_btn.bind("<Enter>", lambda e: verify_btn.config(bg="#00CC66"))
+        verify_btn.bind("<Leave>", lambda e: verify_btn.config(bg="#00FF88"))
+        
+        link_frame = tk.Frame(inner, bg="#0a0a0a")
+        link_frame.pack()
+        
+        tk.Label(link_frame, text="Didn't receive?", font=("Courier New", 9, "bold"),
+                bg="#0a0a0a", fg="#666666").pack(side="left", padx=(0, 5))
+        
+        resend_link = tk.Label(link_frame, text="Resend", font=("Courier New", 9, "bold", "underline"),
+                              bg="#0a0a0a", fg="#00FF88", cursor="hand2")
         resend_link.pack(side="left")
         resend_link.bind("<Button-1>", lambda e: self.resend_otp())
         
-        # Back button
-        back_btn = tk.Button(content, text="← BACK",
-                            font=("Consolas", 10, "bold"), bg="#1F1F1F", fg="#00FF66",
-                            activebackground="#2E2E2E", relief="flat",
+        back_btn = tk.Button(inner, text="← BACK", font=("Courier New", 9, "bold"),
+                            bg="#0a0a0a", fg="#00FF88", relief="flat",
                             cursor="hand2", command=self.show_login_screen)
         back_btn.pack(pady=(20, 0))
     
@@ -225,14 +283,12 @@ class AuthenticationUI:
             messagebox.showerror("Error", "Please enter email and password")
             return
         
-        # Verify credentials
         success, message = self.auth_system.login(email, password)
         
         if not success:
             messagebox.showerror("Login Failed", message)
             return
         
-        # Send OTP using email_config.py
         self.current_email = email
         self.current_password = password
         self.is_signup = False
@@ -263,14 +319,12 @@ class AuthenticationUI:
             messagebox.showerror("Error", "Password must be at least 6 characters")
             return
         
-        # Create account
         success, message = self.auth_system.signup(email, password)
         
         if not success:
             messagebox.showerror("Signup Failed", message)
             return
         
-        # Send OTP using email_config.py
         self.current_email = email
         self.current_password = password
         self.is_signup = True
@@ -295,13 +349,11 @@ class AuthenticationUI:
         
         if success:
             if self.is_signup:
-                # Mark user as verified
                 self.auth_system.verify_user(self.current_email)
                 messagebox.showinfo("Success", "Account verified successfully!\n\nYou can now access SECURENETRA.")
             else:
                 messagebox.showinfo("Success", "Login successful!\n\nWelcome to SECURENETRA.")
             
-            # Call success callback to show main dashboard
             self.on_success_callback(self.current_email)
         else:
             messagebox.showerror("Verification Failed", message)
