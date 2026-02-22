@@ -85,7 +85,7 @@ class AuthenticationUI:
         inner.pack(padx=40, pady=40)
         
         # Title
-        title = tk.Label(inner, text="⚡ HACKER LOGIN", font=("Courier New", 24, "bold"),
+        title = tk.Label(inner, text="⚡ AI SECURITY CONSOLE", font=("Courier New", 24, "bold"),
                         bg="#0a0a0a", fg="#00FF88")
         title.pack(pady=(0, 30))
         

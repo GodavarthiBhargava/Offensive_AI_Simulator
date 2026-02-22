@@ -239,7 +239,8 @@ class Dashboard:
             ("Email & Message Analyzer", self.open_email_analyzer),
             ("Domain Verification", self.open_domain_verification),
             ("AI Behavior Engine", self.open_ai_behavior),
-            ("Phishing Campaign Simulator", self.open_phishing_campaign),
+            ("Phishing Email Service", self.open_phishing_service),
+            ("Pwned Password Checker", self.open_pwned_check),
             ("Risk & Analytics Dashboard", self.open_analytics),
             ("Awareness Training", self.open_awareness_training),
             ("Voice / Social Engineering", self.open_social_engineering)
@@ -326,11 +327,11 @@ class Dashboard:
         module_window.configure(bg="#2E2E2E")
         AIBehaviorModule(module_window)
     
-    def open_phishing_campaign(self):
-        from ui.phishing_campaign_ui import PhishingCampaignModule
+    def open_pwned_check(self):
+        from ui.pwned_check_ui import PwnedCheckModule
         module_window = tk.Toplevel(self.root)
         module_window.configure(bg="#2E2E2E")
-        PhishingCampaignModule(module_window)
+        PwnedCheckModule(module_window)
     
     def open_social_engineering(self):
         from ui.social_engineering_ui import VoiceAnalysisModule
@@ -361,6 +362,10 @@ class Dashboard:
         module_window = tk.Toplevel(self.root)
         module_window.configure(bg="#2E2E2E")
         AwarenessTrainingModule(module_window)
+    
+    def open_phishing_service(self):
+        from ui.phishing_service_ui import PhishingServiceModule
+        PhishingServiceModule(self.root)
     
     def fade_in_widget(self, widget, alpha=0.0):
         """Fade-in animation for widget"""

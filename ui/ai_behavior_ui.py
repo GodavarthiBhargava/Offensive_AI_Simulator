@@ -1,157 +1,176 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, scrolledtext
-import sqlite3
-import os
-from datetime import datetime
-from collections import Counter
-import re
-import json
+import threading
 
 class AIBehaviorModule:
     def __init__(self, window):
         self.window = window
-        self.window.title("AI Behavior Engine")
-        self.window.geometry("1200x700")
+        self.window.title("AI Behavior Engine - PassGPT")
+        self.window.geometry("1400x800")
         self.window.configure(bg="#2E2E2E")
         
-        # Top bar
-        navbar = tk.Frame(window, bg="#1F1F1F", height=50)
-        navbar.pack(fill="x")
-        navbar.pack_propagate(False)
+        self.model = None
+        self.tokenizer = None
+        self.models_loaded = False
         
-        tk.Label(navbar, text="🧠 AI BEHAVIOR ENGINE - Pattern Learning & Prediction",
-                font=("Consolas", 14, "bold"), bg="#1F1F1F", fg="#00FF66").pack(pady=15)
+        # Top Header Section
+        header = tk.Frame(window, bg="#1F1F1F", height=80)
+        header.pack(fill="x")
+        header.pack_propagate(False)
         
-        tk.Frame(window, bg="#003300", height=1).pack(fill="x")
+        # Title
+        tk.Label(header, text="🔐 AI Password Pattern Generator",
+                font=("Consolas", 16, "bold"), bg="#1F1F1F", fg="#00FF66").pack(pady=(10, 0))
+        tk.Label(header, text="Advanced Password Modeling Engine",
+                font=("Consolas", 10), bg="#1F1F1F", fg="#666666").pack()
+        
+        # Status badge
+        status_frame = tk.Frame(header, bg="#1F1F1F")
+        status_frame.pack(pady=5)
+        
+        self.status_badge = tk.Label(status_frame, text="🟡 Loading...", 
+                                     font=("Consolas", 9, "bold"),
+                                     bg="#000000", fg="#FFAA00", padx=10, pady=3)
+        self.status_badge.pack(side="left", padx=5)
+        
+        self.model_info = tk.Label(status_frame, text="Model: PassGPT-16 | CPU", 
+                                   font=("Consolas", 9),
+                                   bg="#000000", fg="#666666", padx=10, pady=3)
+        self.model_info.pack(side="left", padx=5)
+        
+        tk.Frame(window, bg="#003300", height=2).pack(fill="x")
         
         # Main content
         content = tk.Frame(window, bg="#2E2E2E")
         content.pack(fill="both", expand=True, padx=20, pady=20)
         
-        # Left panel - Analysis
-        left_panel = tk.Frame(content, bg="#1F1F1F", relief="solid", bd=2)
-        left_panel.pack(side="left", fill="both", expand=True, padx=(0, 10))
+        # INPUT CARD
+        input_card = tk.Frame(content, bg="#1F1F1F", relief="solid", bd=2,
+                             highlightbackground="#00FF66", highlightthickness=1)
+        input_card.pack(fill="x", pady=(0, 20))
         
-        tk.Label(left_panel, text="📊 LEARNED PATTERNS", font=("Consolas", 14, "bold"),
+        tk.Label(input_card, text="📝 INPUT PARAMETERS", font=("Consolas", 12, "bold"),
                 bg="#1F1F1F", fg="#00FF66").pack(pady=15)
         
-        # Pattern display
-        self.pattern_text = tk.Text(left_panel, bg="#000000", fg="#00FF66",
-                                   font=("Consolas", 11, "bold"), relief="flat",
-                                   padx=15, pady=15, wrap=tk.WORD)
-        self.pattern_text.pack(fill="both", expand=True, padx=10, pady=(0, 10))
+        # Input fields in grid
+        fields_frame = tk.Frame(input_card, bg="#1F1F1F")
+        fields_frame.pack(padx=20, pady=(0, 15))
         
-        # Right panel - Predictions
-        right_panel = tk.Frame(content, bg="#1F1F1F", relief="solid", bd=2)
-        right_panel.pack(side="right", fill="both", expand=True, padx=(10, 0))
+        # First Name
+        tk.Label(fields_frame, text="First Name:", font=("Consolas", 10, "bold"),
+                bg="#1F1F1F", fg="#00FF66").grid(row=0, column=0, sticky="w", padx=(0, 10), pady=5)
+        self.first_name_entry = tk.Entry(fields_frame, font=("Consolas", 11, "bold"),
+                                         bg="#000000", fg="#00FF66", relief="solid", bd=1, width=25)
+        self.first_name_entry.grid(row=0, column=1, padx=10, pady=5)
         
-        tk.Label(right_panel, text="🎯 AI PREDICTIONS", font=("Consolas", 14, "bold"),
-                bg="#1F1F1F", fg="#00FF66").pack(pady=15)
+        # Last Name
+        tk.Label(fields_frame, text="Last Name:", font=("Consolas", 10, "bold"),
+                bg="#1F1F1F", fg="#00FF66").grid(row=0, column=2, sticky="w", padx=(20, 10), pady=5)
+        self.last_name_entry = tk.Entry(fields_frame, font=("Consolas", 11, "bold"),
+                                        bg="#000000", fg="#00FF66", relief="solid", bd=1, width=25)
+        self.last_name_entry.grid(row=0, column=3, padx=10, pady=5)
         
-        # User input for prediction
-        input_frame = tk.Frame(right_panel, bg="#1F1F1F")
-        input_frame.pack(fill="x", padx=10, pady=(0, 10))
+        # Number of predictions
+        tk.Label(fields_frame, text="Predictions:", font=("Consolas", 10, "bold"),
+                bg="#1F1F1F", fg="#00FF66").grid(row=1, column=0, sticky="w", padx=(0, 10), pady=5)
+        self.num_predictions = ttk.Combobox(fields_frame, values=[20, 30, 50, 100], 
+                                           font=("Consolas", 11, "bold"), width=23, state="readonly")
+        self.num_predictions.set(50)
+        self.num_predictions.grid(row=1, column=1, padx=10, pady=5)
         
-        tk.Label(input_frame, text="First Name:", font=("Consolas", 11, "bold"),
-                bg="#1F1F1F", fg="#00FF66").pack(anchor="w", pady=(0, 5))
-        self.first_name_entry = tk.Entry(input_frame, font=("Consolas", 11, "bold"),
-                                         bg="#000000", fg="#00FF66", relief="solid", bd=1)
-        self.first_name_entry.pack(fill="x", ipady=5, pady=(0, 10))
+        # Generate button
+        generate_btn = tk.Button(fields_frame, text="🚀 GENERATE PREDICTIONS",
+                               font=("Consolas", 12, "bold"), bg="#00FF66", fg="#000000",
+                               activebackground="#00CC52", relief="solid", bd=2,
+                               cursor="hand2", command=self.generate_predictions, height=2)
+        generate_btn.grid(row=1, column=2, columnspan=2, padx=20, pady=5, sticky="ew")
         
-        tk.Label(input_frame, text="Last Name:", font=("Consolas", 11, "bold"),
-                bg="#1F1F1F", fg="#00FF66").pack(anchor="w", pady=(0, 5))
-        self.last_name_entry = tk.Entry(input_frame, font=("Consolas", 11, "bold"),
-                                        bg="#000000", fg="#00FF66", relief="solid", bd=1)
-        self.last_name_entry.pack(fill="x", ipady=5, pady=(0, 10))
+        # OUTPUT SECTION with Tabs
+        output_frame = tk.Frame(content, bg="#1F1F1F", relief="solid", bd=2)
+        output_frame.pack(fill="both", expand=True)
         
-        predict_btn = tk.Button(input_frame, text="🔮 GENERATE PREDICTIONS",
-                               font=("Consolas", 11, "bold"), bg="#000000", fg="#00FF66",
-                               activebackground="#003300", relief="solid", bd=2,
-                               cursor="hand2", command=self.generate_predictions)
-        predict_btn.pack(fill="x", ipady=8)
+        # Tab header
+        tab_header = tk.Frame(output_frame, bg="#1F1F1F")
+        tab_header.pack(fill="x")
         
-        # Prediction display
-        self.prediction_text = tk.Text(right_panel, bg="#000000", fg="#00FF66",
-                                      font=("Consolas", 11, "bold"), relief="flat",
-                                      padx=15, pady=15, wrap=tk.WORD)
-        self.prediction_text.pack(fill="both", expand=True, padx=10, pady=(0, 10))
+        self.active_tab = "rule"
         
-        # Bottom buttons
-        btn_frame = tk.Frame(content, bg="#2E2E2E")
-        btn_frame.pack(fill="x", pady=(10, 0))
+        self.tab_rule = tk.Button(tab_header, text="🔹 Rule-Based", font=("Consolas", 11, "bold"),
+                                 bg="#00FF66", fg="#000000", relief="flat", bd=0,
+                                 cursor="hand2", command=lambda: self.switch_tab("rule"), padx=20, pady=10)
+        self.tab_rule.pack(side="left")
         
-        analyze_btn = tk.Button(btn_frame, text="🔄 ANALYZE DATABASE",
-                               font=("Consolas", 11, "bold"), bg="#000000", fg="#00FF66",
-                               activebackground="#003300", relief="solid", bd=2,
-                               cursor="hand2", command=self.analyze_patterns)
-        analyze_btn.pack(side="left", padx=5, ipady=8, ipadx=20)
+        self.tab_summary = tk.Button(tab_header, text="📊 Summary", font=("Consolas", 11, "bold"),
+                                    bg="#000000", fg="#00FF66", relief="flat", bd=0,
+                                    cursor="hand2", command=lambda: self.switch_tab("summary"), padx=20, pady=10)
+        self.tab_summary.pack(side="left")
         
-        # Load initial analysis
-        self.analyze_patterns()
+        # Tab content area
+        self.tab_content = tk.Frame(output_frame, bg="#000000")
+        self.tab_content.pack(fill="both", expand=True, padx=10, pady=10)
+        
+        # Rule-based frame
+        self.rule_frame = tk.Frame(self.tab_content, bg="#000000")
+        self.rule_text = scrolledtext.ScrolledText(self.rule_frame, font=("Consolas", 10, "bold"),
+                                                   bg="#000000", fg="#00FF66", relief="flat",
+                                                   padx=15, pady=15, wrap=tk.WORD)
+        self.rule_text.pack(fill="both", expand=True)
+        
+        # Summary frame
+        self.summary_frame = tk.Frame(self.tab_content, bg="#000000")
+        self.summary_text = tk.Text(self.summary_frame, font=("Consolas", 11, "bold"),
+                                   bg="#000000", fg="#00FF66", relief="flat",
+                                   padx=20, pady=20, wrap=tk.WORD)
+        self.summary_text.pack(fill="both", expand=True)
+        
+        # Show default tab
+        self.switch_tab("rule")
+        
+        # Load AI model
+        self.load_model_async()
     
-    def analyze_patterns(self):
-        """Analyze password patterns from database"""
-        self.pattern_text.delete(1.0, tk.END)
+    def switch_tab(self, tab_name):
+        """Switch between tabs"""
+        self.active_tab = tab_name
         
-        db_path = "cases/attack_results.db"
-        if not os.path.exists(db_path):
-            self.pattern_text.insert(tk.END, "⚠ No data available. Run password attacks first.\n")
-            return
+        # Update button colors
+        if tab_name == "rule":
+            self.tab_rule.config(bg="#00FF66", fg="#000000")
+            self.tab_summary.config(bg="#000000", fg="#00FF66")
+            self.rule_frame.pack(fill="both", expand=True)
+            self.summary_frame.pack_forget()
+        else:
+            self.tab_rule.config(bg="#000000", fg="#00FF66")
+            self.tab_summary.config(bg="#00FF66", fg="#000000")
+            self.summary_frame.pack(fill="both", expand=True)
+            self.rule_frame.pack_forget()
+    
+    def load_model_async(self):
+        """Load PassGPT model in background"""
+        def load():
+            try:
+                self.status_badge.config(text="🟡 Loading...", fg="#FFAA00")
+                
+                from transformers import AutoTokenizer, AutoModelForCausalLM
+                import torch
+                
+                model_name = "javirandor/passgpt-16characters"
+                
+                self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+                self.model = AutoModelForCausalLM.from_pretrained(model_name)
+                self.model.eval()
+                
+                self.models_loaded = True
+                self.status_badge.config(text="🟢 Connected", fg="#00FF66")
+            except Exception as e:
+                self.status_badge.config(text="🔴 Offline", fg="#FF4444")
+                self.model_info.config(text="Model: Not Loaded")
         
-        conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
-        cursor.execute("SELECT cracked_password FROM attack_results WHERE cracked_password != 'N/A'")
-        passwords = [row[0] for row in cursor.fetchall()]
-        conn.close()
-        
-        if not passwords:
-            self.pattern_text.insert(tk.END, "⚠ No cracked passwords found for analysis.\n")
-            return
-        
-        self.pattern_text.insert(tk.END, f"📈 ANALYSIS RESULTS ({len(passwords)} passwords analyzed)\n")
-        self.pattern_text.insert(tk.END, "="*60 + "\n\n")
-        
-        # Length analysis
-        lengths = [len(p) for p in passwords]
-        avg_length = sum(lengths) / len(lengths)
-        self.pattern_text.insert(tk.END, f"📏 Average Length: {avg_length:.1f} characters\n")
-        self.pattern_text.insert(tk.END, f"   Most common: {Counter(lengths).most_common(1)[0][0]} chars\n\n")
-        
-        # Character type analysis
-        numeric_only = sum(1 for p in passwords if p.isdigit())
-        alpha_only = sum(1 for p in passwords if p.isalpha())
-        mixed = len(passwords) - numeric_only - alpha_only
-        
-        self.pattern_text.insert(tk.END, f"🔤 Character Types:\n")
-        self.pattern_text.insert(tk.END, f"   Numeric only: {numeric_only} ({numeric_only/len(passwords)*100:.1f}%)\n")
-        self.pattern_text.insert(tk.END, f"   Alpha only: {alpha_only} ({alpha_only/len(passwords)*100:.1f}%)\n")
-        self.pattern_text.insert(tk.END, f"   Mixed: {mixed} ({mixed/len(passwords)*100:.1f}%)\n\n")
-        
-        # Common patterns
-        patterns = []
-        for p in passwords:
-            if re.search(r'\d{3,}', p):
-                patterns.append("Sequential numbers")
-            if re.search(r'123', p):
-                patterns.append("Contains '123'")
-            if any(year in p for year in ['2024', '2025', '2023']):
-                patterns.append("Contains year")
-        
-        if patterns:
-            pattern_counts = Counter(patterns)
-            self.pattern_text.insert(tk.END, f"🎯 Common Patterns:\n")
-            for pattern, count in pattern_counts.most_common(5):
-                self.pattern_text.insert(tk.END, f"   • {pattern}: {count} times\n")
-            self.pattern_text.insert(tk.END, "\n")
-        
-        # Most common passwords
-        common = Counter(passwords).most_common(5)
-        self.pattern_text.insert(tk.END, f"🔥 Most Common Passwords:\n")
-        for pwd, count in common:
-            self.pattern_text.insert(tk.END, f"   • '{pwd}': {count} times\n")
+        thread = threading.Thread(target=load, daemon=True)
+        thread.start()
     
     def generate_predictions(self):
-        """Generate password predictions based on user info"""
+        """Generate password predictions"""
         first_name = self.first_name_entry.get().strip()
         last_name = self.last_name_entry.get().strip()
         
@@ -159,56 +178,86 @@ class AIBehaviorModule:
             messagebox.showerror("Error", "Enter at least one name")
             return
         
-        self.prediction_text.delete(1.0, tk.END)
+        num_samples = int(self.num_predictions.get())
         
-        self.prediction_text.insert(tk.END, f"🎯 AI PREDICTIONS FOR: {first_name} {last_name}\n")
-        self.prediction_text.insert(tk.END, "="*60 + "\n\n")
+        self.rule_text.delete(1.0, tk.END)
+        self.summary_text.delete(1.0, tk.END)
         
-        predictions = []
+        self.rule_text.insert(tk.END, "Generating patterns...\n\n")
+        self.window.update()
         
-        # Name-based predictions
-        if first_name:
-            predictions.extend([
-                first_name.lower(),
-                first_name.capitalize(),
-                first_name.upper(),
-                first_name.lower() + "123",
-                first_name.lower() + "2024",
-                first_name.lower() + "2025",
-                first_name.lower() + "!",
-                first_name.lower() + "@123"
-            ])
-        
-        if last_name:
-            predictions.extend([
-                last_name.lower(),
-                last_name.capitalize(),
-                last_name.lower() + "123",
-                last_name.lower() + "2024"
-            ])
-        
-        if first_name and last_name:
-            predictions.extend([
-                first_name.lower() + last_name.lower(),
-                first_name[0].lower() + last_name.lower(),
-                first_name.lower() + last_name[0].lower(),
-                first_name.lower() + last_name.lower() + "123"
-            ])
-        
-        # Common patterns
-        predictions.extend([
-            "password123",
-            "admin123",
-            "welcome123",
-            "qwerty123"
-        ])
-        
-        self.prediction_text.insert(tk.END, "📋 HIGH PROBABILITY PASSWORDS:\n\n")
-        for i, pred in enumerate(predictions[:20], 1):
-            self.prediction_text.insert(tk.END, f"{i:2d}. {pred}\n")
-        
-        self.prediction_text.insert(tk.END, f"\n✅ Generated {len(predictions)} predictions\n")
-        self.prediction_text.insert(tk.END, "💡 Use these in Password Attack Simulator\n")
+        thread = threading.Thread(target=self._generate_thread, 
+                                 args=(first_name, last_name, num_samples), daemon=True)
+        thread.start()
+    
+    def _generate_thread(self, first_name, last_name, num_samples):
+        """Generate predictions in background"""
+        try:
+            # Generate rule-based patterns
+            patterns = []
+            
+            if first_name:
+                fn = first_name.lower()
+                patterns.extend([
+                    fn, first_name.capitalize(), first_name.upper(),
+                    fn + "123", fn + "1234", fn + "@123", fn + "!",
+                    fn + "2024", fn + "2025", fn + "2023",
+                    "2024" + fn, "2023" + fn,
+                    fn + "_123", fn + ".123"
+                ])
+            
+            if last_name:
+                ln = last_name.lower()
+                patterns.extend([
+                    ln, last_name.capitalize(), last_name.upper(),
+                    ln + "123", ln + "2024", ln + "@123"
+                ])
+            
+            if first_name and last_name:
+                fn = first_name.lower()
+                ln = last_name.lower()
+                patterns.extend([
+                    fn + ln, ln + fn,
+                    fn + "_" + ln, fn + "." + ln, fn + "-" + ln,
+                    fn[0] + ln, fn + ln[0],
+                    fn + ln + "123", fn + ln + "2024",
+                    fn + "123" + ln, fn + "2024" + ln
+                ])
+            
+            patterns = list(set(patterns))
+            patterns = [p for p in patterns if 4 <= len(p) <= 20]
+            patterns = patterns[:num_samples]
+            
+            # Analyze patterns
+            numeric_heavy = sum(1 for p in patterns if sum(c.isdigit() for c in p) > len(p)/2)
+            alpha_only = sum(1 for p in patterns if p.isalpha())
+            mixed = len(patterns) - numeric_heavy - alpha_only
+            
+            # Display rule-based
+            self.rule_text.delete(1.0, tk.END)
+            self.rule_text.insert(tk.END, f"PREDICTIONS FOR: {first_name} {last_name}\n")
+            self.rule_text.insert(tk.END, "="*60 + "\n\n")
+            
+            for i, pattern in enumerate(patterns, 1):
+                tag = "[NUM]" if sum(c.isdigit() for c in pattern) > len(pattern)/2 else "[ALPHA]" if pattern.isalpha() else "[MIX]"
+                self.rule_text.insert(tk.END, f"{i:3d}. {pattern:20s} {tag}\n")
+            
+            # Display summary
+            self.summary_text.delete(1.0, tk.END)
+            self.summary_text.insert(tk.END, "GENERATION SUMMARY\n")
+            self.summary_text.insert(tk.END, "="*60 + "\n\n")
+            self.summary_text.insert(tk.END, f"Target: {first_name} {last_name}\n\n")
+            self.summary_text.insert(tk.END, f"📈 Total Generated: {len(patterns)}\n\n")
+            self.summary_text.insert(tk.END, "PATTERN DISTRIBUTION:\n\n")
+            self.summary_text.insert(tk.END, f"🔢 Numeric Heavy: {numeric_heavy} ({numeric_heavy/len(patterns)*100:.1f}%)\n")
+            self.summary_text.insert(tk.END, f"🔤 Alpha Only: {alpha_only} ({alpha_only/len(patterns)*100:.1f}%)\n")
+            self.summary_text.insert(tk.END, f"🔀 Mixed: {mixed} ({mixed/len(patterns)*100:.1f}%)\n\n")
+            self.summary_text.insert(tk.END, f"🧠 Confidence: {'High' if len(patterns) > 30 else 'Medium'}\n\n")
+            self.summary_text.insert(tk.END, "="*60 + "\n\n")
+            self.summary_text.insert(tk.END, "Use these patterns in Password Attack Simulator\n")
+            
+        except Exception as e:
+            self.rule_text.insert(tk.END, f"\nERROR: {str(e)}\n")
 
 
 if __name__ == "__main__":

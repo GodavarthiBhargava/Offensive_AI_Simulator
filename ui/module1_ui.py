@@ -2,7 +2,6 @@ import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 from backend.dictionary_attack import dictionary_attack_plain, dictionary_attack_hash
 from backend.brute_force import brute_force_attack
-from backend.ai_attack import ai_attack_plain, ai_attack_hash
 from backend.hashing import hash_password
 from backend.database import init_database, save_case_record, generate_case_id
 import time
@@ -101,7 +100,7 @@ class PasswordAttackModule:
         # Attack Type
         self.attack_type_var = tk.StringVar(value="Dictionary Attack")
         self._create_dropdown(left_panel, "ATTACK TYPE", self.attack_type_var,
-                             ["Brute Force", "Dictionary Attack", "AI Search"], self.toggle_attack_type)
+                             ["Brute Force", "Dictionary Attack"], self.toggle_attack_type)
         
         # Dictionary Upload (shown only for Dictionary Attack)
         self.dict_upload_frame = tk.Frame(left_panel, bg="#2E2E2E")
@@ -217,12 +216,16 @@ class PasswordAttackModule:
             )
     
     def print_console(self, text, delay=0.05):
-        self.console.config(state="normal")
-        self.console.insert("end", text + "\n")
-        self.console.see("end")
-        self.console.config(state="disabled")
-        self.window.update()
-        time.sleep(delay)
+        try:
+            if self.console.winfo_exists():
+                self.console.config(state="normal")
+                self.console.insert("end", text + "\n")
+                self.console.see("end")
+                self.console.config(state="disabled")
+                self.window.update()
+                time.sleep(delay)
+        except:
+            pass
     
     def clear_console(self):
         self.console.config(state="normal")
@@ -283,7 +286,6 @@ class PasswordAttackModule:
                     cracked, found_password, method = self._dict_attack_hash_log(
                         credential, algorithm, first_name, last_name
                     )
-            
             elif attack_type == "Brute Force":
                 if password_type == "Plain Password":
                     result = brute_force_attack(
@@ -315,18 +317,7 @@ class PasswordAttackModule:
                     self.print_console(f"[SUCCESS] Password cracked: {found_password}", 0.1)
                 else:
                     self.print_console("[FAILED] Brute force failed", 0.1)
-            
-            elif attack_type == "AI Search":
-                self.print_console("[INFO] Starting AI-based search...", 0.1)
-                if password_type == "Plain Password":
-                    cracked, found_password, method = ai_attack_plain(credential, first_name, last_name)
-                else:
-                    cracked, found_password, method = ai_attack_hash(credential, algorithm, first_name, last_name)
-                
-                if cracked:
-                    self.print_console(f"[SUCCESS] Password found: {found_password}", 0.1)
-                else:
-                    self.print_console("[FAILED] AI search failed", 0.1)
+
             
             # Final result
             self.print_console("", 0.05)

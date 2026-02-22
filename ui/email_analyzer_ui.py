@@ -82,11 +82,12 @@ class EmailAnalyzerModule:
         btn_frame = tk.Frame(left_panel, bg="#1F1F1F")
         btn_frame.pack(fill="x", padx=10, pady=10)
         
-        analyze_btn = tk.Button(btn_frame, text="🔍 ANALYZE EMAIL",
+        analyze_btn = tk.Button(btn_frame, text="🔍 ANALYZE MESSAGE",
                                font=("Consolas", 12, "bold"), bg="#000000", fg="#00FF66",
                                activebackground="#003300", relief="solid", bd=2,
                                cursor="hand2", command=self.analyze_email)
         analyze_btn.pack(side="left", padx=5, ipady=8, ipadx=20)
+        self.analyze_btn = analyze_btn
         
         clear_btn = tk.Button(btn_frame, text="🗑️ CLEAR",
                              font=("Consolas", 11, "bold"), bg="#000000", fg="#FF4444",
@@ -138,11 +139,19 @@ class EmailAnalyzerModule:
             self.subject_label.pack(anchor="w", pady=(0, 5))
             self.subject_entry.pack(fill="x", ipady=5, pady=(0, 10))
             self.body_label.config(text="Email Body:")
-        else:
+            self.analyze_btn.config(text="🔍 ANALYZE EMAIL")
+        elif msg_type == "WhatsApp":
             self.from_label.config(text="Sender Name/Number:")
             self.subject_label.pack_forget()
             self.subject_entry.pack_forget()
-            self.body_label.config(text="Message Content:")
+            self.body_label.config(text="WhatsApp Message:")
+            self.analyze_btn.config(text="🔍 ANALYZE WHATSAPP")
+        else:  # SMS
+            self.from_label.config(text="Sender Name/Number:")
+            self.subject_label.pack_forget()
+            self.subject_entry.pack_forget()
+            self.body_label.config(text="SMS Content:")
+            self.analyze_btn.config(text="🔍 ANALYZE SMS")
     
     def init_analyzer_db(self):
         """Initialize analyzer database"""

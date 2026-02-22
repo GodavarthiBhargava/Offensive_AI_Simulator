@@ -1,18 +1,12 @@
-# Email Configuration (Contains sensitive credentials)
-email_config.py
-
-# Database files
-cases/users.db
-cases/*.db
-
-# Python cache
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
-
-# Distribution / packaging
 .Python
+env/
+venv/
+ENV/
 build/
 develop-eggs/
 dist/
@@ -29,20 +23,21 @@ wheels/
 .installed.cfg
 *.egg
 
-# PyInstaller
-*.manifest
-*.spec
+# Sensitive files
+email_config.py
+huggingface_token.py
+login_hf.py
 
-# Virtual Environment
-venv/
-env/
-ENV/
+# Database files
+cases/*.db
+*.db
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
 # OS
 .DS_Store
@@ -50,3 +45,7 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Cache
+.cache/
+*.cache
