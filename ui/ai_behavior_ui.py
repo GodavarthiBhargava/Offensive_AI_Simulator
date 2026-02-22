@@ -70,20 +70,29 @@ class AIBehaviorModule:
                                         bg="#000000", fg="#00FF66", relief="solid", bd=1, width=25)
         self.last_name_entry.grid(row=0, column=3, padx=10, pady=5)
         
+        # Date of Birth
+        tk.Label(fields_frame, text="Date of Birth:", font=("Consolas", 10, "bold"),
+                bg="#1F1F1F", fg="#00FF66").grid(row=1, column=0, sticky="w", padx=(0, 10), pady=5)
+        self.dob_entry = tk.Entry(fields_frame, font=("Consolas", 11, "bold"),
+                                 bg="#000000", fg="#00FF66", relief="solid", bd=1, width=25)
+        self.dob_entry.grid(row=1, column=1, padx=10, pady=5)
+        self.dob_entry.insert(0, "DD/MM/YYYY")
+        self.dob_entry.bind("<FocusIn>", lambda e: self.dob_entry.delete(0, tk.END) if self.dob_entry.get() == "DD/MM/YYYY" else None)
+        
         # Number of predictions
         tk.Label(fields_frame, text="Predictions:", font=("Consolas", 10, "bold"),
-                bg="#1F1F1F", fg="#00FF66").grid(row=1, column=0, sticky="w", padx=(0, 10), pady=5)
+                bg="#1F1F1F", fg="#00FF66").grid(row=1, column=2, sticky="w", padx=(20, 10), pady=5)
         self.num_predictions = ttk.Combobox(fields_frame, values=[20, 30, 50, 100], 
                                            font=("Consolas", 11, "bold"), width=23, state="readonly")
         self.num_predictions.set(50)
-        self.num_predictions.grid(row=1, column=1, padx=10, pady=5)
+        self.num_predictions.grid(row=1, column=3, padx=10, pady=5)
         
         # Generate button
         generate_btn = tk.Button(fields_frame, text="🚀 GENERATE PREDICTIONS",
                                font=("Consolas", 12, "bold"), bg="#00FF66", fg="#000000",
                                activebackground="#00CC52", relief="solid", bd=2,
                                cursor="hand2", command=self.generate_predictions, height=2)
-        generate_btn.grid(row=1, column=2, columnspan=2, padx=20, pady=5, sticky="ew")
+        generate_btn.grid(row=2, column=0, columnspan=4, padx=20, pady=15, sticky="ew")
         
         # OUTPUT SECTION with Tabs
         output_frame = tk.Frame(content, bg="#1F1F1F", relief="solid", bd=2)
@@ -173,9 +182,13 @@ class AIBehaviorModule:
         """Generate password predictions"""
         first_name = self.first_name_entry.get().strip()
         last_name = self.last_name_entry.get().strip()
+        dob = self.dob_entry.get().strip()
         
-        if not first_name and not last_name:
-            messagebox.showerror("Error", "Enter at least one name")
+        if dob == "DD/MM/YYYY":
+            dob = ""
+        
+        if not first_name and not last_name and not dob:
+            messagebox.showerror("Error", "Enter at least one field")
             return
         
         num_samples = int(self.num_predictions.get())
@@ -187,12 +200,20 @@ class AIBehaviorModule:
         self.window.update()
         
         thread = threading.Thread(target=self._generate_thread, 
-                                 args=(first_name, last_name, num_samples), daemon=True)
+                                 args=(first_name, last_name, dob, num_samples), daemon=True)
         thread.start()
     
-    def _generate_thread(self, first_name, last_name, num_samples):
+    def _generate_thread(self, first_name, last_name, dob, num_samples):
         """Generate predictions in background"""
         try:
+            # Parse DOB
+            dob_parts = []
+            if dob and "/" in dob:
+                parts = dob.split("/")
+                if len(parts) == 3:
+                    day, month, year = parts
+                    dob_parts = [day, month, year, year[-2:] if len(year) == 4 else year]
+            
             # Generate rule-based patterns
             patterns = []
             
@@ -205,6 +226,14 @@ class AIBehaviorModule:
                     "2024" + fn, "2023" + fn,
                     fn + "_123", fn + ".123"
                 ])
+                
+                # Add DOB patterns with first name
+                if dob_parts:
+                    patterns.extend([
+                        fn + dob_parts[0], fn + dob_parts[1], fn + dob_parts[2], fn + dob_parts[3],
+                        fn + dob_parts[0] + dob_parts[1], fn + dob_parts[1] + dob_parts[3],
+                        fn + "@" + dob_parts[3], fn + dob_parts[3] + "!"
+                    ])
             
             if last_name:
                 ln = last_name.lower()
@@ -212,6 +241,13 @@ class AIBehaviorModule:
                     ln, last_name.capitalize(), last_name.upper(),
                     ln + "123", ln + "2024", ln + "@123"
                 ])
+                
+                # Add DOB patterns with last name
+                if dob_parts:
+                    patterns.extend([
+                        ln + dob_parts[0], ln + dob_parts[1], ln + dob_parts[2], ln + dob_parts[3],
+                        ln + dob_parts[0] + dob_parts[1]
+                    ])
             
             if first_name and last_name:
                 fn = first_name.lower()
@@ -222,6 +258,23 @@ class AIBehaviorModule:
                     fn[0] + ln, fn + ln[0],
                     fn + ln + "123", fn + ln + "2024",
                     fn + "123" + ln, fn + "2024" + ln
+                ])
+                
+                # Add DOB patterns with full name
+                if dob_parts:
+                    patterns.extend([
+                        fn + ln + dob_parts[3], fn + dob_parts[0] + ln,
+                        fn[0] + ln + dob_parts[3]
+                    ])
+            
+            # Pure DOB patterns
+            if dob_parts:
+                patterns.extend([
+                    dob_parts[0] + dob_parts[1] + dob_parts[2],
+                    dob_parts[0] + dob_parts[1] + dob_parts[3],
+                    dob_parts[2], dob_parts[3],
+                    dob_parts[0] + "/" + dob_parts[1] + "/" + dob_parts[2],
+                    dob_parts[0] + dob_parts[1], dob_parts[1] + dob_parts[3]
                 ])
             
             patterns = list(set(patterns))
@@ -235,8 +288,10 @@ class AIBehaviorModule:
             
             # Display rule-based
             self.rule_text.delete(1.0, tk.END)
-            self.rule_text.insert(tk.END, f"PREDICTIONS FOR: {first_name} {last_name}\n")
-            self.rule_text.insert(tk.END, "="*60 + "\n\n")
+            self.rule_text.insert(tk.END, f"PREDICTIONS FOR: {first_name} {last_name}")
+            if dob:
+                self.rule_text.insert(tk.END, f" | DOB: {dob}")
+            self.rule_text.insert(tk.END, "\n" + "="*60 + "\n\n")
             
             for i, pattern in enumerate(patterns, 1):
                 tag = "[NUM]" if sum(c.isdigit() for c in pattern) > len(pattern)/2 else "[ALPHA]" if pattern.isalpha() else "[MIX]"
@@ -246,8 +301,10 @@ class AIBehaviorModule:
             self.summary_text.delete(1.0, tk.END)
             self.summary_text.insert(tk.END, "GENERATION SUMMARY\n")
             self.summary_text.insert(tk.END, "="*60 + "\n\n")
-            self.summary_text.insert(tk.END, f"Target: {first_name} {last_name}\n\n")
-            self.summary_text.insert(tk.END, f"📈 Total Generated: {len(patterns)}\n\n")
+            self.summary_text.insert(tk.END, f"Target: {first_name} {last_name}\n")
+            if dob:
+                self.summary_text.insert(tk.END, f"DOB: {dob}\n")
+            self.summary_text.insert(tk.END, f"\n📈 Total Generated: {len(patterns)}\n\n")
             self.summary_text.insert(tk.END, "PATTERN DISTRIBUTION:\n\n")
             self.summary_text.insert(tk.END, f"🔢 Numeric Heavy: {numeric_heavy} ({numeric_heavy/len(patterns)*100:.1f}%)\n")
             self.summary_text.insert(tk.END, f"🔤 Alpha Only: {alpha_only} ({alpha_only/len(patterns)*100:.1f}%)\n")

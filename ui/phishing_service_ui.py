@@ -18,24 +18,23 @@ from email.mime.text import MIMEText
 from datetime import datetime
 
 # ── Palette ────────────────────────────────────────────────────
-BG_DARK    = "#0a0f1e"
-PANEL_BG   = "#0d1526"
-CARD_BG    = "#0f1c35"
-ACCENT     = "#7b2ff7"    # purple theme for phishing module
-ACCENT2    = "#00d4ff"
-TEXT_MAIN  = "#e8f4fd"
-TEXT_MUTED = "#4a6fa5"
-BORDER     = "#1e3a5f"
-ERROR_C    = "#ff4d6d"
-SUCCESS_C  = "#00e5a0"
-WARN_C     = "#f0b429"
-ENTRY_BG   = "#070e1c"
+BG_DARK    = "#2E2E2E"
+PANEL_BG   = "#1F1F1F"
+CARD_BG    = "#0a0a0a"
+ACCENT     = "#00FF66"
+ACCENT2    = "#00CC55"
+TEXT_MAIN  = "#00FF66"
+TEXT_MUTED = "#666666"
+BORDER     = "#003300"
+ERROR_C    = "#FF4444"
+SUCCESS_C  = "#00FF66"
+WARN_C     = "#FFAA00"
+ENTRY_BG   = "#000000"
 
 # ══════════════════════════════════════════════════════════════
 #  Pre-made HTML Email Templates
 # ══════════════════════════════════════════════════════════════
 TEMPLATES = {
-
     "🔴 Google — Security Alert": {
         "subject": "Security Alert: New sign-in to your Google Account",
         "preview": "Someone signed into your account from a new device.",
@@ -168,7 +167,6 @@ TEMPLATES = {
 </table>
 </body></html>""",
     },
-
 }
 
 
@@ -200,12 +198,12 @@ class PhishingServiceModule:
                  bg=PANEL_BG, fg=WARN_C).pack(side="right", padx=24)
 
         # Disclaimer bar
-        disc = tk.Frame(self.window, bg="#1a0a00", height=36)
+        disc = tk.Frame(self.window, bg="#0a0a0a", height=36)
         disc.pack(fill="x")
         disc.pack_propagate(False)
 
         tk.Label(disc, text="🔐  This tool is strictly for authorised penetration testing and security awareness training. Misuse is illegal.",
-                 font=("Consolas", 10), bg="#1a0a00", fg="#ff8c42", anchor="w").pack(fill="x", padx=20, pady=8)
+                 font=("Consolas", 10), bg="#0a0a0a", fg=WARN_C, anchor="w").pack(fill="x", padx=20, pady=8)
 
         # Main layout
         body = tk.Frame(self.window, bg=BG_DARK)
@@ -222,7 +220,7 @@ class PhishingServiceModule:
         self._template_buttons = {}
         for name in TEMPLATES:
             btn = tk.Button(left_panel, text=name, anchor="w", font=("Segoe UI", 12),
-                           bg=PANEL_BG, fg=TEXT_MUTED, activebackground="#1a1040",
+                           bg=PANEL_BG, fg=TEXT_MUTED, activebackground="#003300",
                            relief="flat", bd=0, padx=20, pady=15, cursor="hand2",
                            command=lambda n=name: self._select_template(n))
             btn.pack(fill="x", padx=8, pady=2)
@@ -245,9 +243,17 @@ class PhishingServiceModule:
 
         tk.Frame(center_panel, height=1, bg=BORDER).pack(fill="x", padx=16, pady=(0, 8))
 
-        self.html_preview = tk.Text(center_panel, bg=ENTRY_BG, fg="#a8c7fa", font=("Consolas", 10),
-                                    relief="solid", bd=1, wrap="none", state="disabled")
-        self.html_preview.pack(fill="both", expand=True, padx=16, pady=(0, 16))
+        preview_frame = tk.Frame(center_panel, bg=PANEL_BG)
+        preview_frame.pack(fill="both", expand=True, padx=16, pady=(0, 16))
+
+        preview_scroll = tk.Scrollbar(preview_frame)
+        preview_scroll.pack(side="right", fill="y")
+
+        self.html_preview = tk.Text(preview_frame, bg=ENTRY_BG, fg="#00FF66", font=("Consolas", 9),
+                                    relief="solid", bd=1, wrap="word", state="disabled",
+                                    yscrollcommand=preview_scroll.set, height=20)
+        self.html_preview.pack(side="left", fill="both", expand=True)
+        preview_scroll.config(command=self.html_preview.yview)
 
         # Right: Config panel
         self._build_config_panel(body)
@@ -260,7 +266,6 @@ class PhishingServiceModule:
         panel.pack(side="right", fill="y")
         panel.pack_propagate(False)
 
-        # Scrollable canvas
         canvas = tk.Canvas(panel, bg=PANEL_BG, highlightthickness=0)
         scrollbar = tk.Scrollbar(panel, orient="vertical", command=canvas.yview)
         scrollable_frame = tk.Frame(canvas, bg=PANEL_BG)
@@ -280,7 +285,8 @@ class PhishingServiceModule:
                      bg=PANEL_BG, fg=TEXT_MUTED, anchor="w").pack(fill="x", padx=4, pady=(8, 2))
             e = tk.Entry(scrollable_frame, font=("Consolas", 12), bg=ENTRY_BG, fg=TEXT_MAIN,
                         relief="solid", bd=1, insertbackground=TEXT_MAIN, show=show)
-            e.insert(0, placeholder) if not show else None
+            if placeholder and not show:
+                e.insert(0, placeholder)
             e.pack(fill="x", padx=4, ipady=8)
             setattr(self, attr, e)
 
@@ -288,84 +294,34 @@ class PhishingServiceModule:
                  bg=PANEL_BG, fg=ERROR_C, anchor="w").pack(fill="x", padx=4, pady=(4, 6))
 
         field("TARGET EMAIL", "victim@example.com", "target_entry")
+        field("YOUR EMAIL (sender)", "bhargava9553@gmail.com", "sender_email")
+        field("APP PASSWORD", "brwp bkvy jtaz ygwc", "smtp_password", show="●")
+        field("SENDER NAME", "Security Team", "sender_name_entry")
         field("CUSTOM SUBJECT (optional)", "", "custom_subject")
-        field("SENDER DISPLAY NAME", "Google Security Team", "sender_name_entry")
 
         tk.Frame(scrollable_frame, height=1, bg=BORDER).pack(fill="x", padx=4, pady=14)
-
-        tk.Label(scrollable_frame, text="SMTP CONFIGURATION", font=("Consolas", 9, "bold"),
-                 bg=PANEL_BG, fg=TEXT_MUTED, anchor="w").pack(fill="x", padx=4, pady=(0, 6))
-
-        field("YOUR EMAIL (sender)", "youremail@gmail.com", "smtp_email")
-        field("APP PASSWORD", "", "smtp_password", show="●")
-
-        tk.Label(scrollable_frame, text="SMTP SERVER", font=("Consolas", 9, "bold"),
-                 bg=PANEL_BG, fg=TEXT_MUTED, anchor="w").pack(fill="x", padx=4, pady=(10, 2))
-
-        smtp_row = tk.Frame(scrollable_frame, bg=PANEL_BG)
-        smtp_row.pack(fill="x", padx=4)
-
-        self.smtp_host = tk.Entry(smtp_row, font=("Consolas", 11), bg=ENTRY_BG, fg=TEXT_MAIN,
-                                  relief="solid", bd=1, insertbackground=TEXT_MAIN)
-        self.smtp_host.insert(0, "smtp.gmail.com")
-        self.smtp_host.pack(side="left", fill="x", expand=True, ipady=6)
-
-        self.smtp_port = tk.Entry(smtp_row, font=("Consolas", 11), bg=ENTRY_BG, fg=TEXT_MAIN,
-                                  relief="solid", bd=1, insertbackground=TEXT_MAIN, width=8)
-        self.smtp_port.insert(0, "587")
-        self.smtp_port.pack(side="left", padx=(6, 0), ipady=6)
-
-        # Pre-fill from env
-        try:
-            import email_config
-            self.smtp_email.delete(0, "end")
-            self.smtp_email.insert(0, email_config.SENDER_EMAIL)
-            self.smtp_password.delete(0, "end")
-            self.smtp_password.insert(0, email_config.APP_PASSWORD)
-        except:
-            pass
-
-        tk.Frame(scrollable_frame, height=1, bg=BORDER).pack(fill="x", padx=4, pady=14)
-
-        tk.Label(scrollable_frame, text="SEND COUNT  (1 – 5)", font=("Consolas", 9, "bold"),
-                 bg=PANEL_BG, fg=TEXT_MUTED, anchor="w").pack(fill="x", padx=4, pady=(0, 4))
-
-        self.count_var = tk.IntVar(value=1)
-        self.count_slider = tk.Scale(scrollable_frame, from_=1, to=5, orient="horizontal",
-                                     variable=self.count_var, bg=PANEL_BG, fg=ACCENT,
-                                     highlightthickness=0, troughcolor=BORDER, activebackground=ACCENT)
-        self.count_slider.pack(fill="x", padx=4)
-
-        self.count_label = tk.Label(scrollable_frame, text="Send  1  email(s)", font=("Consolas", 12),
-                                    bg=PANEL_BG, fg=ACCENT)
-        self.count_label.pack(pady=(4, 0))
-        self.count_slider.config(command=lambda v: self.count_label.config(text=f"Send  {int(float(v))}  email(s)"))
 
         self.status_label = tk.Label(scrollable_frame, text="Ready to send", font=("Consolas", 11),
                                      bg=PANEL_BG, fg=TEXT_MUTED, wraplength=240)
-        self.status_label.pack(pady=(10, 0))
+        self.status_label.pack(pady=(4, 4))
 
-        self.send_btn = tk.Button(scrollable_frame, text="  🎣  Launch Phishing Email", font=("Consolas", 13, "bold"),
-                                  bg=ACCENT, fg="#fff", activebackground="#5a1fc7", relief="flat",
-                                  cursor="hand2", command=self._confirm_and_send, pady=12)
-        self.send_btn.pack(fill="x", padx=4, pady=(12, 0))
-
-        tk.Button(scrollable_frame, text="  🔌  Test SMTP Connection", font=("Consolas", 11),
-                 bg=PANEL_BG, fg=TEXT_MUTED, activebackground="#1a1040", relief="solid", bd=1,
-                 cursor="hand2", command=self._test_smtp, pady=8).pack(fill="x", padx=4, pady=(8, 4))
+        self.send_btn = tk.Button(scrollable_frame, text="  🎣  SEND PHISHING EMAIL", font=("Consolas", 12, "bold"),
+                                  bg="#000000", fg=ACCENT, activebackground="#003300", relief="solid", bd=2,
+                                  cursor="hand2", command=self._send_email, pady=10)
+        self.send_btn.pack(fill="x", padx=4, pady=(4, 10))
 
         tk.Label(scrollable_frame, text="SEND LOG", font=("Consolas", 9, "bold"),
                  bg=PANEL_BG, fg=TEXT_MUTED, anchor="w").pack(fill="x", padx=4, pady=(14, 4))
 
         self.log_box = tk.Text(scrollable_frame, bg=ENTRY_BG, fg=SUCCESS_C, font=("Consolas", 10),
-                              relief="solid", bd=1, height=8, wrap="word", state="disabled")
+                              relief="solid", bd=1, height=10, wrap="word", state="disabled")
         self.log_box.pack(fill="x", padx=4, pady=(0, 10))
 
     def _select_template(self, name):
         self._selected_template = name
         for n, btn in self._template_buttons.items():
             if n == name:
-                btn.configure(bg="#1a1040", fg=ACCENT)
+                btn.configure(bg="#003300", fg=ACCENT)
             else:
                 btn.configure(bg=PANEL_BG, fg=TEXT_MUTED)
 
@@ -375,96 +331,76 @@ class PhishingServiceModule:
 
         self.html_preview.configure(state="normal")
         self.html_preview.delete("1.0", "end")
-        self.html_preview.insert("1.0", tpl["html"].strip())
+        
+        preview_text = f"""EMAIL TEMPLATE: {name}
+
+SUBJECT: {tpl['subject']}
+
+FROM: {tpl['from_name']}
+
+PREVIEW: {tpl['preview']}
+
+This email will be sent as a professional HTML email with:
+• Brand-specific styling and colors
+• Realistic sender information
+• Embedded links and buttons
+• Professional formatting
+• Target email personalization
+
+The actual HTML template is ready to send."""
+        
+        self.html_preview.insert("1.0", preview_text)
         self.html_preview.configure(state="disabled")
 
         if hasattr(self, "sender_name_entry"):
             self.sender_name_entry.delete(0, "end")
             self.sender_name_entry.insert(0, tpl["from_name"])
 
-    def _confirm_and_send(self):
+    def _send_email(self):
         target = self.target_entry.get().strip()
-        if not target:
-            self._set_status("⚠  Enter a target email first.", ERROR_C)
+        sender_email = self.sender_email.get().strip()
+        smtp_pass = self.smtp_password.get().strip()
+        sender_name = self.sender_name_entry.get().strip()
+        
+        if not all([target, sender_email, smtp_pass, sender_name]):
+            messagebox.showerror("Missing Information", "Please fill in all required fields.")
             return
 
-        dialog = tk.Toplevel(self.window)
-        dialog.title("Confirm — Authorised Use Declaration")
-        dialog.geometry("420x300")
-        dialog.resizable(False, False)
-        dialog.configure(bg="#12040a")
-        dialog.grab_set()
-
-        tk.Label(dialog, text="⚠  AUTHORISATION REQUIRED", font=("Consolas", 14, "bold"),
-                 bg="#12040a", fg=ERROR_C).pack(pady=(24, 8))
-
-        tk.Label(dialog, text=(f"You are about to send a simulated phishing email to:\n\n"
-                              f"  {target}\n\n"
-                              "By clicking CONFIRM you declare that:\n"
-                              "  • You have explicit written authorisation\n"
-                              "  • This is for security awareness training only\n"
-                              "  • You have legal right to test this target"),
-                 font=("Consolas", 11), bg="#12040a", fg=TEXT_MUTED, justify="left").pack(padx=24, pady=4)
-
-        btn_row = tk.Frame(dialog, bg="#12040a")
-        btn_row.pack(pady=16)
-
-        tk.Button(btn_row, text="✓  CONFIRM & SEND", font=("Consolas", 12, "bold"),
-                 bg=ERROR_C, fg="#fff", activebackground="#c0392b", relief="flat",
-                 cursor="hand2", command=lambda: [dialog.destroy(), self._send_email()],
-                 padx=20, pady=10).pack(side="left", padx=6)
-
-        tk.Button(btn_row, text="  Cancel", font=("Consolas", 12),
-                 bg=PANEL_BG, fg=TEXT_MUTED, activebackground="#1a1040", relief="solid", bd=1,
-                 cursor="hand2", command=dialog.destroy, padx=20, pady=10).pack(side="left", padx=6)
-
-    def _send_email(self):
-        self.send_btn.configure(state="disabled", text="  ⏳  Sending…")
+        self._set_status("⏳  Sending email...", ACCENT2)
+        self.send_btn.configure(state="disabled", text="  ⏳  Sending...")
+        
         threading.Thread(target=self._send_thread, daemon=True).start()
 
     def _send_thread(self):
         target = self.target_entry.get().strip()
-        smtp_email = self.smtp_email.get().strip()
+        sender_email = self.sender_email.get().strip()
         smtp_pass = self.smtp_password.get().strip()
-        smtp_host = self.smtp_host.get().strip() or "smtp.gmail.com"
-        smtp_port = int(self.smtp_port.get().strip() or 587)
-        count = self.count_var.get()
         sender_name = self.sender_name_entry.get().strip()
         tpl = TEMPLATES[self._selected_template]
         subject = self.custom_subject.get().strip() or tpl["subject"]
         send_time = datetime.now().strftime("%d %b %Y, %I:%M %p")
-
         html_body = tpl["html"].replace("{TARGET_EMAIL}", target).replace("{SEND_TIME}", send_time)
 
-        if not smtp_email or not smtp_pass:
-            self.window.after(0, lambda: self._set_status("⚠  Enter SMTP email and password.", ERROR_C))
-            self.window.after(0, lambda: self.send_btn.configure(state="normal", text="  🎣  Launch Phishing Email"))
-            return
-
-        self.window.after(0, lambda: self._set_status("🔌  Connecting to SMTP…", ACCENT2))
-
         try:
-            server = smtplib.SMTP(smtp_host, smtp_port, timeout=10)
+            server = smtplib.SMTP("smtp.gmail.com", 587, timeout=10)
             server.ehlo()
             server.starttls()
-            server.login(smtp_email, smtp_pass)
+            server.login(sender_email, smtp_pass)
 
-            for i in range(count):
-                msg = MIMEMultipart("alternative")
-                msg["Subject"] = subject
-                msg["From"] = f"{sender_name} <{smtp_email}>"
-                msg["To"] = target
+            msg = MIMEMultipart("alternative")
+            msg["Subject"] = subject
+            msg["From"] = f"{sender_name} <{sender_email}>"
+            msg["To"] = target
 
-                msg.attach(MIMEText(f"Please view this email in an HTML-compatible client.\n\nSubject: {subject}", "plain"))
-                msg.attach(MIMEText(html_body, "html"))
+            msg.attach(MIMEText(f"Please view this email in an HTML-compatible client.\n\nSubject: {subject}", "plain"))
+            msg.attach(MIMEText(html_body, "html"))
 
-                server.sendmail(smtp_email, target, msg.as_string())
-                self.window.after(0, lambda n=i+1: self._log(f"✔  Email {n}/{count} sent → {target}"))
-                self.window.after(0, lambda n=i+1: self._set_status(f"✔  Sent {n}/{count}", SUCCESS_C))
-
+            server.sendmail(sender_email, target, msg.as_string())
             server.quit()
-            self.window.after(0, lambda: self._set_status(f"✅  {count} email(s) sent successfully!", SUCCESS_C))
-            self.window.after(0, lambda: self._log(f"── Campaign complete: {count} email(s) ──"))
+            
+            self.window.after(0, lambda: self._set_status("✅  Email sent successfully!", SUCCESS_C))
+            self.window.after(0, lambda: self._log(f"✔  Email sent → {target}"))
+            self.window.after(0, lambda: messagebox.showinfo("Success", f"Phishing email sent to {target}"))
             
             try:
                 stats_tracker.record_phishing_sent(target=target, template=self._selected_template)
@@ -472,41 +408,13 @@ class PhishingServiceModule:
                 pass
 
         except smtplib.SMTPAuthenticationError:
-            self.window.after(0, lambda: self._set_status("⚠  Authentication failed. Check email/app password.", ERROR_C))
-            self.window.after(0, lambda: self._log("✘  SMTP Auth Error — Invalid credentials"))
+            self.window.after(0, lambda: self._set_status("⚠  Authentication failed. Check credentials.", ERROR_C))
+            self.window.after(0, lambda: self._log("✘  SMTP Auth Error"))
         except Exception as e:
-            self.window.after(0, lambda: self._set_status(f"⚠  Error: {e}", ERROR_C))
-            self.window.after(0, lambda: self._log(f"✘  Error: {e}"))
+            self.window.after(0, lambda: self._set_status(f"⚠  Error: {str(e)[:50]}", ERROR_C))
+            self.window.after(0, lambda: self._log(f"✘  Error: {str(e)}"))
         finally:
-            self.window.after(0, lambda: self.send_btn.configure(state="normal", text="  🎣  Launch Phishing Email"))
-
-    def _test_smtp(self):
-        smtp_email = self.smtp_email.get().strip()
-        smtp_pass = self.smtp_password.get().strip()
-        smtp_host = self.smtp_host.get().strip() or "smtp.gmail.com"
-        smtp_port = int(self.smtp_port.get().strip() or 587)
-
-        if not smtp_email or not smtp_pass:
-            self._set_status("⚠  Enter SMTP credentials first.", ERROR_C)
-            return
-
-        self._set_status("🔌  Testing connection…", ACCENT2)
-
-        def test():
-            try:
-                server = smtplib.SMTP(smtp_host, smtp_port, timeout=8)
-                server.ehlo()
-                server.starttls()
-                server.login(smtp_email, smtp_pass)
-                server.quit()
-                self.window.after(0, lambda: self._set_status("✅  SMTP connection successful!", SUCCESS_C))
-                self.window.after(0, lambda: self._log(f"✔  SMTP OK: {smtp_host}:{smtp_port}"))
-            except smtplib.SMTPAuthenticationError:
-                self.window.after(0, lambda: self._set_status("✘  Auth failed — check app password.", ERROR_C))
-            except Exception as e:
-                self.window.after(0, lambda: self._set_status(f"✘  Connection failed: {e}", ERROR_C))
-
-        threading.Thread(target=test, daemon=True).start()
+            self.window.after(0, lambda: self.send_btn.configure(state="normal", text="  🎣  SEND PHISHING EMAIL"))
 
     def _set_status(self, msg, color=TEXT_MUTED):
         self.status_label.configure(text=msg, fg=color)

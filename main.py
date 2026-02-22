@@ -355,7 +355,7 @@ class Dashboard:
         from ui.analytics_ui import AnalyticsDashboard
         module_window = tk.Toplevel(self.root)
         module_window.configure(bg="#2E2E2E")
-        AnalyticsDashboard(module_window)
+        AnalyticsDashboard(module_window, self.case_name)
     
     def open_awareness_training(self):
         from ui.awareness_training_ui import AwarenessTrainingModule
@@ -364,8 +364,10 @@ class Dashboard:
         AwarenessTrainingModule(module_window)
     
     def open_phishing_service(self):
-        from ui.phishing_service_ui import PhishingServiceModule
-        PhishingServiceModule(self.root)
+        from ui.phishing_campaign_ui import PhishingCampaignModule
+        module_window = tk.Toplevel(self.root)
+        module_window.configure(bg="#2E2E2E")
+        PhishingCampaignModule(module_window)
     
     def fade_in_widget(self, widget, alpha=0.0):
         """Fade-in animation for widget"""
@@ -489,6 +491,7 @@ class SplashScreen:
 def main():
     root = tk.Tk()
     
+    # ========== MFA ENABLED ==========
     def on_auth_success(user_email):
         """Called after successful authentication"""
         # Clear authentication screen
@@ -514,6 +517,13 @@ def main():
     
     # Start with splash screen
     SplashScreen(root, show_authentication)
+    # ==============================================
+    
+    # # Direct access without MFA (for development)
+    # def on_case_ready(case_name):
+    #     Dashboard(root, case_name)
+    # 
+    # WelcomeScreen(root, on_case_ready)
     root.mainloop()
 
 
